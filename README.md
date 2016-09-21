@@ -1,5 +1,5 @@
 # Hue Controller
-This project contains a web page the uses an `XMLHttpRequest` on your local network to send JSON data to the Hue Light.
+This project contains a web page the uses an `XMLHttpRequest` on your local network to send JSON data to the Hue Light. It does not require or use the Hue API.
 
 ## Set Up
 A newdeveloper URL needs to be set up on the hue bridge before it can be controlled. For now, this is a hard coded string, but eventually it will be automated.

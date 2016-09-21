@@ -8,10 +8,6 @@ var hue = {
 	getUrl: function () {
 		'use strict';
 		//`http://$(this.ip)/api/$(this.userId)/lights/$(this.lightNo)`
-		/*return 'http://<ip>/api/<userId>/lights/<lightNo>'
-			.replace(/<ip>/, this.ip)
-			.replace(/<userId>/, this.userId)
-			.replace(/<lightNo>/, this.lightNo);*/
 		return 'http://' + this.ip + '/api/' + this.userId + '/lights/' + this.lightNo;
 	},
 	putUrl: function () {
@@ -34,7 +30,7 @@ function doStuff(settings, responseHandler) {
 	xhr.onreadystatechange = function () {
 		if (this.readyState === 4 && this.status === 200) {
 			var res = JSON.parse(this.responseText);
-			console.log(res[0]);
+			//console.log(res[0]);
 			if (responseHandler === 'function') {
 				responseHandler(res[0]);
 			}
@@ -59,11 +55,11 @@ function getStuff(responseHandler) {
 	xhr.onreadystatechange = function () {
 		if (this.readyState === 4 && this.status === 200) {
 			var res = JSON.parse(this.responseText);
-			console.log(res.state);
+			//console.log(res.state);
 			if (typeof responseHandler === 'function') {
-				if (!res.state.on) {
+				/*if (!res.state.on) {
 					console.log('Light will respond to changes once turned on.');
-				}
+				}*/
 				responseHandler(res.state);
 			}
 		}
@@ -71,6 +67,73 @@ function getStuff(responseHandler) {
 
 	xhr.open('GET', hue.getUrl());
 	xhr.send();
+}
+
+
+/*
+ * Converts values of hue, saturation and visibility to
+ * red blue and green
+ * @param h - the hue component of the colour (range 0-1)
+ * @param s - the saturation component of the colour (range 0-1)
+ * @param v - the visibility component of the colour (range 0-1)
+ * @returns { r, g, b } - an object containing the values for
+ *                        red, green and blue (range 0-255)
+ */
+function hsv2rgb(h, s, v) {
+	'use strict';
+    var r, g, b, i, f, p, q, t;
+    /*if (arguments.length === 1) {
+        s = h.s, v = h.v, h = h.h;
+    }*/
+    i = h * 6 | 0;
+    f = h * 6 - i;
+    p = v * (1 - s);
+    q = v * (1 - f * s);
+    t = v * (1 - (1 - f) * s);
+	
+    switch (i % 6) {
+	case 0:
+		r = v;
+		g = t;
+		b = p;
+		break;
+	
+	case 1:
+		r = q;
+		g = v;
+		b = p;
+		break;
+	
+	case 2:
+		r = p;
+		g = v;
+		b = t;
+		break;
+	
+	case 3:
+		r = p;
+		g = q;
+		b = v;
+		break;
+	
+	case 4:
+		r = t;
+		g = p;
+		b = v;
+		break;
+	
+	case 5:
+		r = v;
+		g = p;
+		b = q;
+		break;
+	}
+    
+	return {
+        r: r * 0xFF | 0,
+        g: g * 0xFF | 0,
+        b: b * 0xFF | 0
+    };
 }
 
 
@@ -166,7 +229,6 @@ function toggle() {
 function setColour(hex) {
 	'use strict';
 	var hsv = hex2hsv(hex);
-	console.log(hsv);
 	doStuff({
 		hue: hsv.h * 0xFFFF | 0,
 		sat: hsv.s * 0xFF | 0,
@@ -174,13 +236,48 @@ function setColour(hex) {
 	});
 }
 
-
 // Attach event listeners to HTML inputs
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
 	var toggleInput = document.getElementById('toggle'),
-		colourInput = document.getElementById('colour');
+		colourInput = document.getElementById('colour'),
+		colourWheel = document.getElementById('colour-wheel'),
+		canvas,
+		ctx,
+		buffer,
+		radius = 200,
+		W = 2 * radius,
+		H = 2 * radius,
+		i,
+		x,
+		y,
+		r,
+		t,
+		h,
+		s,
+		v,
+		rgb,
+		mouse = {},
+		intervalHandle,
+		timeInterval = 100;
 	
+	function setColourToMousePosition() {
+		var i = 4 * (mouse.y * W + mouse.x),
+			rgb = {
+				r: buffer.data[i],
+				g: buffer.data[i + 1],
+				b: buffer.data[i + 2],
+				a: buffer.data[i + 3]
+			},
+			hex = (rgb.r << 16) + (rgb.g << 8) + rgb.b;
+
+		if (rgb.a !== 0) {
+			setColour(hex);
+			document.body.style.backgroundColor = '#' + hex.toString(16);
+
+		}
+	}
+			
 	if (toggleInput) {
 		toggleInput.addEventListener('click', toggle);
 	}
@@ -188,6 +285,75 @@ document.addEventListener('DOMContentLoaded', function () {
 	if (colourInput) {
 		colourInput.addEventListener('change', function () {
 			setColour(colourInput.value);
+		});
+	}
+	
+	if (colourWheel) {
+		canvas = document.createElement('canvas');
+		//canvas.style.border = "1px solid black";
+		canvas.width = W;
+		canvas.height = H;
+		colourWheel.appendChild(canvas);
+		ctx = canvas.getContext('2d');
+		
+		buffer = ctx.getImageData(0, 0, W, H);
+		
+		for (i = 0; i < buffer.data.length; i += 4) {
+			x = i / 4 % W | 0;
+			y = i / 4 / W | 0;
+			r = Math.sqrt(Math.pow(x - W / 2, 2) + Math.pow(y - H / 2, 2));
+			
+			if (r >= radius) {
+				// Outside of the circle
+				buffer.data[i]     = 0;
+				buffer.data[i + 1] = 0;
+				buffer.data[i + 2] = 0;
+				buffer.data[i + 3] = 0;
+			} else if (x === W / 2 && y === H / 2) {
+				// The exact centre
+				buffer.data[i]     = 0xFF;
+				buffer.data[i + 1] = 0xFF;
+				buffer.data[i + 2] = 0xFF;
+				buffer.data[i + 3] = 0xFF;
+			} else {
+				t = Math.atan((y - H / 2) / (x - W / 2));
+				if (x < W / 2) {
+					t += Math.PI;
+				}
+				h = t / (2 * Math.PI);
+				if (h < 0) {
+					h += 1;
+				}
+				s = r / radius;
+				v = 1; ////////////////////////////////////////////////////////// from other bar
+				rgb = hsv2rgb(h, s, v);
+
+				buffer.data[i]     = rgb.r;
+				buffer.data[i + 1] = rgb.g;
+				buffer.data[i + 2] = rgb.b;
+				buffer.data[i + 3] = 0xFF;
+			}
+		}
+		
+		ctx.putImageData(buffer, 0, 0);
+		
+		canvas.addEventListener('mousemove', function (e) {
+			var rect = canvas.getBoundingClientRect();
+			mouse.x = e.clientX - rect.left;
+			mouse.y = e.clientY - rect.top;
+		});
+		
+		canvas.addEventListener('mousedown', function (e) {
+			setColourToMousePosition();
+			intervalHandle = setInterval(setColourToMousePosition, timeInterval);
+		});
+		
+		canvas.addEventListener('mouseup', function () {
+			clearInterval(intervalHandle);
+		});
+		
+		canvas.addEventListener('mouseout', function () {
+			clearInterval(intervalHandle);
 		});
 	}
 });
