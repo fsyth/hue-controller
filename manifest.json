@@ -1,0 +1,12 @@
+{
+	"name": "Hue Light Controller",
+	"description": "Simple controller for Philips Hue Lights",
+	"version": "0.1",
+	"manifest_version": 2,
+	"app": {
+		"background": {
+			"scripts": [ "background.js" ]
+		}
+	},
+	"icons": { "16": "light-16.png", "128": "light-128.png" }
+}
