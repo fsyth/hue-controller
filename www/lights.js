@@ -254,7 +254,7 @@ function hex2hsv(hex) {
  * -OR-
  * @param r - an object {r, g, b}
  *
- * @returns { h, s, v } - an object containing the values for
+ * @returns string - formatted '#rrggbb'
  */
 function rgb2hex(r, g, b) {
 	'use strict';
@@ -265,7 +265,37 @@ function rgb2hex(r, g, b) {
 		r = r.r;
     }
 	
-	return '#' + ('00000' + (r << 16 + g << 8 + b)).slice(-6);
+	return '#' + ('00000' + ((r << 16) + (g << 8) + b).toString(16)).slice(-6);
+}
+
+
+/*
+ * Converts values of hue, saturation and visibility to
+ * a hexadecimal string starting with #
+ * @param h - the hue component of the colour (range 0-1)
+ * @param s - the saturation component of the colour (range 0-1)
+ * @param v - the visibility component of the colour (range 0-1)
+ * -OR-
+ * @param h - an object {h, s, v}
+ *
+ * @returns string - formatted '#rrggbb'
+ */
+function hsv2hex(h, s, v) {
+	'use strict';
+	var rgb;
+	
+	// Allow an object { h, s, v } to be passed as h
+    if (arguments.length === 1) {
+        s = h.s;
+		v = h.v;
+		h = h.h;
+    }
+	
+	// Convert hsv to rgb
+	rgb = hsv2rgb(h, s, v);
+	
+	// Convert rgb to hex
+	return rgb2hex(rgb);
 }
 
 
@@ -559,15 +589,28 @@ document.addEventListener('DOMContentLoaded', function () {
 	// Create a colour wheel to select from
 	if (colourWheel) {
 		getStuff(function (res) {
-			var rgb;
+			var rgb, hex;
 			
 			// First update currentColour to the lights current state
 			currentColour.h = res.hue / 0xFFFF;
 			currentColour.s = res.sat / 0xFF;
 			currentColour.v = res.bri / 0xFF;
 		
-			// Convert to rgb to init HTML elements
+			// Convert to rgb to update the rest of current Colour
 			rgb = hsv2rgb(currentColour);
+			
+			currentColour.r = rgb.r;
+			currentColour.g = rgb.g;
+			currentColour.b = rgb.b;
+			
+			// Convert to hex to init HTML elements
+			hex = rgb2hex(rgb);
+			
+			// Initialise background
+			document.body.style.backgroundColor = hex;
+			if (colourInput) {
+				colourInput.value = hex;
+			}
 			
 			// Then draw the colour wheel or the brightness slider
 			createDrawingContext();
