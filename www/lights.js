@@ -1,6 +1,11 @@
 /*global console*/
 /*jslint bitwise: true*/
 
+
+/*********************
+   Hue Parameters
+ *********************/
+
 var hue = {
 	ip: '192.168.1.185',
 	userId: 'qRZ0f2agZeihyCWSBBpWPRUpRg03n9VuXTcRHtHq',
@@ -16,6 +21,10 @@ var hue = {
 	}
 };
 
+
+/**************************
+   XMLHttpRequest Methods
+ **************************/
 
 /*
  * This function sends a data object to the hue light.
@@ -70,6 +79,10 @@ function getStuff(responseHandler) {
 }
 
 
+/*********************
+   Colour Conversions
+ *********************/
+
 /*
  * Converts values of hue, saturation and visibility to
  * red blue and green
@@ -82,9 +95,14 @@ function getStuff(responseHandler) {
 function hsv2rgb(h, s, v) {
 	'use strict';
     var r, g, b, i, f, p, q, t;
-    /*if (arguments.length === 1) {
-        s = h.s, v = h.v, h = h.h;
-    }*/
+	
+	// Allow an object { h, s, v } to be passed as h
+    if (arguments.length === 1) {
+        s = h.s;
+		v = h.v;
+		h = h.h;
+    }
+	
     i = h * 6 | 0;
     f = h * 6 - i;
     p = v * (1 - s);
@@ -148,6 +166,13 @@ function hsv2rgb(h, s, v) {
  */
 function rgb2hsv(r, g, b) {
 	'use strict';
+	// Allow an object { h, s, v } to be passed as h
+    if (arguments.length === 1) {
+        g = r.g;
+		b = r.b;
+		r = r.r;
+    }
+	
 	r /= 0xFF;
 	g /= 0xFF;
 	b /= 0xFF;
@@ -211,6 +236,10 @@ function hex2hsv(hex) {
 }
 
 
+/*********************
+   Example functions
+ *********************/
+
 /*
  * Toggles the light between the on and off states
  */
@@ -221,6 +250,8 @@ function toggle() {
 	});
 }
 
+// Global variable referencing the native colour input
+var colourInput;
 
 /*
  * Sets the colour of the light from a colour hex
@@ -228,20 +259,35 @@ function toggle() {
  */
 function setColour(hex) {
 	'use strict';
-	var hsv = hex2hsv(hex);
+	var hsv = hex2hsv(hex),
+		hexStr = typeof hex === 'string' ?
+				hex :
+				'#' + ('00000' + hex.toString(16)).slice(-6);
+	
 	doStuff({
 		hue: hsv.h * 0xFFFF | 0,
 		sat: hsv.s * 0xFF | 0,
 		bri: hsv.v * 0xFF | 0
 	});
+	
+	document.body.style.backgroundColor = hexStr;
+	
+	if (colourInput) {
+		colourInput.value = hexStr;
+	}
 }
+
+
+/*********************
+   Colour wheel demo
+ *********************/
 
 // Attach event listeners to HTML inputs
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
 	var toggleInput = document.getElementById('toggle'),
-		colourInput = document.getElementById('colour'),
 		colourWheel = document.getElementById('colour-wheel'),
+		modeInput = document.getElementById('mode'),
 		canvas,
 		ctx,
 		buffer,
@@ -253,106 +299,247 @@ document.addEventListener('DOMContentLoaded', function () {
 		y,
 		r,
 		t,
-		h,
-		s,
-		v,
-		rgb,
-		mouse = {},
+		mode = 0,
+		modes = [ 'hue-sat', 'bri' ],
+		currentColour = {
+			h: 0,
+			s: 0,
+			v: 1,
+			hex: 0xFFFFFF,
+			r: 0xFF,
+			g: 0xFF,
+			b: 0xFF,
+			a: 0xFF
+		},
+		mouse = {
+			x: 0,
+			y: 0
+		},
 		intervalHandle,
 		timeInterval = 100;
 	
+	colourInput = document.getElementById('colour');
+	
+	
+	// Updates currentColour to the colour of the pixel at the
+	// mouse position
 	function setColourToMousePosition() {
 		var i = 4 * (mouse.y * W + mouse.x),
-			rgb = {
-				r: buffer.data[i],
-				g: buffer.data[i + 1],
-				b: buffer.data[i + 2],
-				a: buffer.data[i + 3]
-			},
-			hex = (rgb.r << 16) + (rgb.g << 8) + rgb.b;
-
-		if (rgb.a !== 0) {
+			hex,
+			hsv;
+		
+		currentColour.r = buffer.data[i];
+		currentColour.g = buffer.data[i + 1];
+		currentColour.b = buffer.data[i + 2];
+		currentColour.a = buffer.data[i + 3];
+		
+		// Convert rgb back to hsv
+		hsv = rgb2hsv(currentColour);
+		
+		currentColour.h = hsv.h;
+		currentColour.s = hsv.s;
+		currentColour.v = hsv.v;
+		
+		hex = (currentColour.r << 16) + (currentColour.g << 8) + currentColour.b;
+		
+		currentColour.hex = hex;
+		
+		if (currentColour.a !== 0) {
 			setColour(hex);
-			document.body.style.backgroundColor = '#' + hex.toString(16);
-
 		}
 	}
-			
-	if (toggleInput) {
-		toggleInput.addEventListener('click', toggle);
-	}
 	
-	if (colourInput) {
-		colourInput.addEventListener('change', function () {
-			setColour(colourInput.value);
-		});
-	}
 	
-	if (colourWheel) {
+	// Creates the canvas, context and drawing buffer
+	function createDrawingContext() {
+		// Create a canvas in div#colourWheel
 		canvas = document.createElement('canvas');
-		//canvas.style.border = "1px solid black";
+		
+		// Set canvas dimensions
 		canvas.width = W;
 		canvas.height = H;
+		
+		// Add the canvas to the document
 		colourWheel.appendChild(canvas);
+		
+		// Get the 2D context
 		ctx = canvas.getContext('2d');
 		
+		// Create a buffer texture the dimensions of the colourwheel
 		buffer = ctx.getImageData(0, 0, W, H);
+	}
+	
+	
+	// Draws the colour wheel at the current visibility
+	function drawColourWheel() {
+		var h, s, v, rgb,
+			shade = 0xFF * currentColour.visibility | 0;
 		
+		// For each byte in the buffer
 		for (i = 0; i < buffer.data.length; i += 4) {
+			// Calculate the x,y pixel coordinates
 			x = i / 4 % W | 0;
 			y = i / 4 / W | 0;
-			r = Math.sqrt(Math.pow(x - W / 2, 2) + Math.pow(y - H / 2, 2));
 			
+			// Convert x,y to radius from centre of the cirlce
+			r = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
+			
+			// For certain radii, we can simplify calculations
 			if (r >= radius) {
-				// Outside of the circle
+				// Outside of the circle, set to transparent
 				buffer.data[i]     = 0;
 				buffer.data[i + 1] = 0;
 				buffer.data[i + 2] = 0;
 				buffer.data[i + 3] = 0;
-			} else if (x === W / 2 && y === H / 2) {
-				// The exact centre
-				buffer.data[i]     = 0xFF;
-				buffer.data[i + 1] = 0xFF;
-				buffer.data[i + 2] = 0xFF;
-				buffer.data[i + 3] = 0xFF;
+			} else if (x === radius && y === radius) {
+				// The exact centre is range white-black
+				buffer.data[i]     = shade;
+				buffer.data[i + 1] = shade;
+				buffer.data[i + 2] = shade;
+				buffer.data[i + 3] = shade;
 			} else {
-				t = Math.atan((y - H / 2) / (x - W / 2));
-				if (x < W / 2) {
+				// Calculate the angle from the circle centre to the pixel
+				t = Math.atan((y - radius) / (x - radius));
+				// Need to distinguish between +x/+y and -x/-y
+				if (x < radius) {
 					t += Math.PI;
 				}
+				
+				// Scale angle to range 0-1 to give hue
 				h = t / (2 * Math.PI);
 				if (h < 0) {
 					h += 1;
 				}
+				
+				// Scale radius to range 0-1 to give saturation
 				s = r / radius;
-				v = 1; ////////////////////////////////////////////////////////// from other bar
+				
+				// Visibility
+				v = currentColour.v;
+				
+				// Convert hsv format to rgb format
 				rgb = hsv2rgb(h, s, v);
 
+				// Set the pixel in the buffer to the rgb colour
 				buffer.data[i]     = rgb.r;
 				buffer.data[i + 1] = rgb.g;
 				buffer.data[i + 2] = rgb.b;
 				buffer.data[i + 3] = 0xFF;
 			}
 		}
-		
+	}
+	
+	// Draws a circular brightness slider at the current hue and saturation
+	function drawBrightnessSlider() {
+		var h, s, v, rgb;
+		for (i = 0; i < buffer.data.length; i += 4) {
+			// Calculate the x,y pixel coordinates
+			x = i / 4 % W | 0;
+			y = i / 4 / W | 0;
+			
+			// Convert x,y to radius from centre of the cirlce
+			r = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
+			
+			if (r >= radius) {
+				// Outside of the circle, set to transparent
+				buffer.data[i]     = 0;
+				buffer.data[i + 1] = 0;
+				buffer.data[i + 2] = 0;
+				buffer.data[i + 3] = 0;
+			} else {
+				// Adjust the visibility of the current based on height y
+				h = currentColour.h;
+				s = currentColour.s;
+				v = 1 - y / H;
+				
+				// Convert to rbg
+				rgb = hsv2rgb(h, s, v);
+					
+				// Adjust the darkness of the colour based on v
+				buffer.data[i]     = rgb.r;
+				buffer.data[i + 1] = rgb.g;
+				buffer.data[i + 2] = rgb.b;
+				buffer.data[i + 3] = 0xFF;
+			}
+		}
+	}
+	
+	
+	// Renders the buffer to the canvas
+	function renderBuffer() {
 		ctx.putImageData(buffer, 0, 0);
+	}
+	
+	
+	// Draws everything depending on which mode is selected
+	function draw() {
+		switch (modes[mode]) {
+		case 'hue-sat':
+			drawColourWheel();
+			break;
+
+		case 'bri':
+			drawBrightnessSlider();
+			break;
+		}
+		renderBuffer();
+	}
+	
+	
+	// Changes to the next mode in the modes list 
+	// and re-draws everything
+	function changeMode() {
+		mode = (mode + 1) % modes.length;
+		draw();
+	}
+	
+	
+	// Attach a function to the on/off button
+	if (toggleInput) {
+		toggleInput.addEventListener('click', toggle);
+	}
+	
+	// Attach a function to the native colour input
+	if (colourInput) {
+		colourInput.addEventListener('change', function () {
+			setColour(colourInput.value);
+		});
+	}
+	
+	// Attach a function to the mode button
+	if (modeInput) {
+		modeInput.addEventListener('click', changeMode);
+	}
+	
+	// Create a colour wheel to select from
+	if (colourWheel) {
+		// Draw the colour wheel or the brightness slider
+		createDrawingContext();
+		draw();
 		
 		canvas.addEventListener('mousemove', function (e) {
+			// On mouse move, update the mouse coordinates relative to the canvas
 			var rect = canvas.getBoundingClientRect();
-			mouse.x = e.clientX - rect.left;
-			mouse.y = e.clientY - rect.top;
+			mouse.x = e.clientX - rect.left | 0;
+			mouse.y = e.clientY - rect.top | 0;
 		});
 		
 		canvas.addEventListener('mousedown', function (e) {
+			// On mousedown, immediately set the colour
 			setColourToMousePosition();
+			// Clear any existing intervals, just in case.
+			clearInterval(intervalHandle);
+			// Also set an interval, allowing dynamic udate for click and drag
 			intervalHandle = setInterval(setColourToMousePosition, timeInterval);
 		});
 		
 		canvas.addEventListener('mouseup', function () {
+			// On mouseup, end drag
 			clearInterval(intervalHandle);
 		});
 		
-		canvas.addEventListener('mouseout', function () {
+		document.body.addEventListener('mouseout', function () {
+			// On mouseout, end drag
 			clearInterval(intervalHandle);
 		});
 	}
