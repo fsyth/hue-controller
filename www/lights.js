@@ -56,6 +56,9 @@ function doStuff(settings, responseHandler) {
  * This function gets the current data object held by the light
  * @param responseHandler - a callback function whose first
  *                          argument contains the response
+ *
+ * Note: The callback is called asynchronously once the 
+ * XMLHttpRequest responds.
  */
 function getStuff(responseHandler) {
 	'use strict';
@@ -89,6 +92,9 @@ function getStuff(responseHandler) {
  * @param h - the hue component of the colour (range 0-1)
  * @param s - the saturation component of the colour (range 0-1)
  * @param v - the visibility component of the colour (range 0-1)
+ * -OR-
+ * @param h - an object {h, s, v}
+ *
  * @returns { r, g, b } - an object containing the values for
  *                        red, green and blue (range 0-255)
  */
@@ -161,12 +167,15 @@ function hsv2rgb(h, s, v) {
  * @param r - the red component of the colour (range 0-255)
  * @param g - the green component of the colour (range 0-255)
  * @param b - the blue component of the colour (range 0-255)
+ * -OR-
+ * @param r - an object {r, g, b}
+ *
  * @returns { h, s, v } - an object containing the values for
  *                        hue, saturation and visibility (range 0-1)
  */
 function rgb2hsv(r, g, b) {
 	'use strict';
-	// Allow an object { h, s, v } to be passed as h
+	// Allow an object { r, g, b } to be passed as r
     if (arguments.length === 1) {
         g = r.g;
 		b = r.b;
@@ -236,6 +245,30 @@ function hex2hsv(hex) {
 }
 
 
+/*
+ * Converts byte values of red, green and blue to
+ * a hexadecimal string starting with #
+ * @param r - the red component of the colour (range 0-255)
+ * @param g - the green component of the colour (range 0-255)
+ * @param b - the blue component of the colour (range 0-255)
+ * -OR-
+ * @param r - an object {r, g, b}
+ *
+ * @returns { h, s, v } - an object containing the values for
+ */
+function rgb2hex(r, g, b) {
+	'use strict';
+	// Allow an object { r, g, b } to be passed as r
+    if (arguments.length === 1) {
+        g = r.g;
+		b = r.b;
+		r = r.r;
+    }
+	
+	return '#' + ('00000' + (r << 16 + g << 8 + b)).slice(-6);
+}
+
+
 /*********************
    Example functions
  *********************/
@@ -250,8 +283,6 @@ function toggle() {
 	});
 }
 
-// Global variable referencing the native colour input
-var colourInput;
 
 /*
  * Sets the colour of the light from a colour hex
@@ -271,10 +302,6 @@ function setColour(hex) {
 	});
 	
 	document.body.style.backgroundColor = hexStr;
-	
-	if (colourInput) {
-		colourInput.value = hexStr;
-	}
 }
 
 
@@ -286,6 +313,7 @@ function setColour(hex) {
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
 	var toggleInput = document.getElementById('toggle'),
+		colourInput = document.getElementById('colour'),
 		colourWheel = document.getElementById('colour-wheel'),
 		modeInput = document.getElementById('mode'),
 		canvas,
@@ -318,8 +346,31 @@ document.addEventListener('DOMContentLoaded', function () {
 		intervalHandle,
 		timeInterval = 100;
 	
-	colourInput = document.getElementById('colour');
 	
+	// Set the colour to the current colour
+	function setColour(hex, hsv) {
+		var	hexStr = typeof hex === 'string' ?
+					hex :
+					'#' + ('00000' + hex.toString(16)).slice(-6);
+		
+		hsv = hsv || hex2hsv(hex);
+
+		doStuff({
+			hue: hsv.h * 0xFFFF | 0,
+			sat: hsv.s * 0xFF | 0,
+			bri: hsv.v * 0xFF | 0
+		});
+
+		document.body.style.backgroundColor = hexStr;
+
+		currentColour.h = hsv.h;
+		currentColour.s = hsv.s;
+		currentColour.v = hsv.v;
+
+		if (colourInput) {
+			colourInput.value = hexStr;
+		}
+	}
 	
 	// Updates currentColour to the colour of the pixel at the
 	// mouse position
@@ -372,8 +423,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	
 	// Draws the colour wheel at the current visibility
 	function drawColourWheel() {
-		var h, s, v, rgb,
-			shade = 0xFF * currentColour.visibility | 0;
+		var h, s, v, rgb;
 		
 		// For each byte in the buffer
 		for (i = 0; i < buffer.data.length; i += 4) {
@@ -391,19 +441,13 @@ document.addEventListener('DOMContentLoaded', function () {
 				buffer.data[i + 1] = 0;
 				buffer.data[i + 2] = 0;
 				buffer.data[i + 3] = 0;
-			} else if (x === radius && y === radius) {
-				// The exact centre is range white-black
-				buffer.data[i]     = shade;
-				buffer.data[i + 1] = shade;
-				buffer.data[i + 2] = shade;
-				buffer.data[i + 3] = shade;
 			} else {
 				// Calculate the angle from the circle centre to the pixel
-				t = Math.atan((y - radius) / (x - radius));
+				t = Math.atan2(y - radius, x - radius);
 				// Need to distinguish between +x/+y and -x/-y
-				if (x < radius) {
+				/*if (x < radius) {
 					t += Math.PI;
-				}
+				}*/
 				
 				// Scale angle to range 0-1 to give hue
 				h = t / (2 * Math.PI);
@@ -450,7 +494,7 @@ document.addEventListener('DOMContentLoaded', function () {
 				// Adjust the visibility of the current based on height y
 				h = currentColour.h;
 				s = currentColour.s;
-				v = 1 - y / H;
+				v = Math.max(1 - (y / H), 0.01);
 				
 				// Convert to rbg
 				rgb = hsv2rgb(h, s, v);
@@ -503,6 +547,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	if (colourInput) {
 		colourInput.addEventListener('change', function () {
 			setColour(colourInput.value);
+			draw();
 		});
 	}
 	
@@ -513,34 +558,46 @@ document.addEventListener('DOMContentLoaded', function () {
 	
 	// Create a colour wheel to select from
 	if (colourWheel) {
-		// Draw the colour wheel or the brightness slider
-		createDrawingContext();
-		draw();
+		getStuff(function (res) {
+			var rgb;
+			
+			// First update currentColour to the lights current state
+			currentColour.h = res.hue / 0xFFFF;
+			currentColour.s = res.sat / 0xFF;
+			currentColour.v = res.bri / 0xFF;
 		
-		canvas.addEventListener('mousemove', function (e) {
-			// On mouse move, update the mouse coordinates relative to the canvas
-			var rect = canvas.getBoundingClientRect();
-			mouse.x = e.clientX - rect.left | 0;
-			mouse.y = e.clientY - rect.top | 0;
-		});
-		
-		canvas.addEventListener('mousedown', function (e) {
-			// On mousedown, immediately set the colour
-			setColourToMousePosition();
-			// Clear any existing intervals, just in case.
-			clearInterval(intervalHandle);
-			// Also set an interval, allowing dynamic udate for click and drag
-			intervalHandle = setInterval(setColourToMousePosition, timeInterval);
-		});
-		
-		canvas.addEventListener('mouseup', function () {
-			// On mouseup, end drag
-			clearInterval(intervalHandle);
-		});
-		
-		document.body.addEventListener('mouseout', function () {
-			// On mouseout, end drag
-			clearInterval(intervalHandle);
+			// Convert to rgb to init HTML elements
+			rgb = hsv2rgb(currentColour);
+			
+			// Then draw the colour wheel or the brightness slider
+			createDrawingContext();
+			draw();
+			
+			canvas.addEventListener('mousemove', function (e) {
+				// On mouse move, update the mouse coordinates relative to the canvas
+				var rect = canvas.getBoundingClientRect();
+				mouse.x = e.clientX - rect.left | 0;
+				mouse.y = e.clientY - rect.top | 0;
+			});
+
+			canvas.addEventListener('mousedown', function (e) {
+				// On mousedown, immediately set the colour
+				setColourToMousePosition();
+				// Clear any existing intervals, just in case.
+				clearInterval(intervalHandle);
+				// Also set an interval, allowing dynamic udate for click and drag
+				intervalHandle = setInterval(setColourToMousePosition, timeInterval);
+			});
+
+			canvas.addEventListener('mouseup', function () {
+				// On mouseup, end drag
+				clearInterval(intervalHandle);
+			});
+
+			document.body.addEventListener('mouseout', function () {
+				// On mouseout, end drag
+				clearInterval(intervalHandle);
+			});
 		});
 	}
 });
