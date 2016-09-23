@@ -352,7 +352,9 @@ function fadeInAnimation(el, time, callback) {
 	el.style.transition = 'opacity ' + time + 'ms';
 	el.style.opacity = 0;
 	setTimeout(function () {
-		callback();
+		if (typeof callback === 'function') {
+			callback();
+		}
 		el.style.opacity = 1;
 	}, time);
 }
@@ -709,6 +711,85 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 	}
 });
+
+
+/*********************
+   Animations demo
+ *********************/
+
+document.addEventListener('DOMContentLoaded', function () {
+	'use strict';
+	var anim = document.getElementById('anim'),
+		animTable = document.getElementById('anim-table'),
+		animTbody = document.getElementsByTagName('tbody')[0],
+		showAnimButton = document.getElementById('show-anim'),
+		addFrameButton = document.getElementById('add-frame'),
+		paramSelect = anim.getElementsByClassName('param')[0],
+		valueInput = anim.getElementsByClassName('val')[0],
+		deleteRowButton = anim.getElementsByClassName('delete-row')[0],
+		animCloseButton = anim.getElementsByClassName('close-button')[0];
+	
+	function paramChange(e) {
+		var row = e.target.parentElement.parentElement,
+			valTd = row.getElementsByClassName('val-td')[0],
+			valInputs = valTd.getElementsByTagName('input'),
+			i;
+
+		// Hide all inputs in valTd
+		for (i = 0; i < valInputs.length; i += 1) {
+			valInputs[i].style.display = 'none';
+		}
+		
+		// Then show the correct one
+		switch (e.target.value) {
+		case 'Colour':
+			// Show color input
+			valInputs[0].style.display = 'inline';
+			break;
+
+		case 'On/Off':
+			// Show checkbox input
+			valInputs[1].style.display = 'inline';
+			break;
+
+		default:
+			// Show number input
+			valInputs[2].style.display = 'inline';
+			break;
+		}
+	}
+	
+	function deleteRow(e) {
+		var row = e.target.parentElement.parentElement;
+		row.parentElement.removeChild(row);
+	}
+	
+	paramSelect.addEventListener('change', paramChange, false);
+	deleteRowButton.addEventListener('click', deleteRow, false);
+	
+	showAnimButton.addEventListener('click', function () {
+		anim.style.display = anim.style.display === 'block' ? 'none' : 'block';
+	}, false);
+	
+	animCloseButton.addEventListener('click', function () {
+		anim.style.display = 'none';
+	}, false);
+		
+	addFrameButton.addEventListener('click', function () {
+		// Duplicate the penultimate row in the table
+		var index = animTable.rows.length - 2,
+			newRow = animTable.rows[index].cloneNode(true),
+			lastRow = animTable.rows[index + 1];
+		
+		// Add event listeners
+		newRow.getElementsByClassName('delete-row')[0]
+			.addEventListener('click', deleteRow, false);
+		
+		// Insert into table
+		animTbody.insertBefore(newRow, lastRow);
+	}, false);
+});
+
 
 // Test refresh rates
 /*var isOn = false;

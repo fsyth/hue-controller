@@ -5,6 +5,7 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
 	<title>Hue Controller</title>
+	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 	<link rel="stylesheet" href="index.css">
 	<script src="lights.js"></script>
 </head>
@@ -15,6 +16,52 @@
 		<button id="toggle">On/Off</button>
 		<input id="colour" type="color" value="#FFFFFF">
 		<button id="mode">Mode</button>
+		<br>
+		<button id="show-anim">Animations</button>
+	</div>
+	<div id="anim" class="hidden container fade-in">
+		<i class="material-icons close-button">close</i>
+		<h3>Create a custom animation sequence</h3>
+		<table id="anim-table">
+			<thead>
+				<tr>
+					<th>Parameter</th>
+					<th>Value</th>
+					<th>Then wait (s)</th>
+					<th><!--Delete row buttons--></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td class="param-td">
+						<select class="param">
+							<option>Colour</option>
+							<option>Hue</option>
+							<option>Saturation</option>
+							<option>Brightness</option>
+							<option>On/Off</option>
+						</select>
+					</td>
+					<td class="val-td">
+						<input type="color" style="" value="#FFFFFF">
+						<input type="checkbox" style="display: none" checked>
+						<input type="number" min="0" max="1" step="0.1" style="display: none" value="1">
+					</td>
+					<td>
+						<input type="number" min="0" step="0.1" value="0">
+					</td>
+					<td>
+						<i class="delete-row material-icons">delete</i>
+					</td>
+				</tr>
+				<tr>
+					<td><button id="add-frame">Add frame</button></td>
+					<td>Loop:</td>
+					<td><input id="loop-anim" type="checkbox"></td>
+				</tr>
+			</tbody>
+		</table>
+		<i class="run-animation material-icons" title="Coming soon...">play circle filled</i>
 	</div>
 </body>
 
