@@ -348,6 +348,7 @@ function setColour(hex) {
  *                   element is faded out
  */
 function fadeInAnimation(el, time, callback) {
+	'use strict';
 	el.style.transition = 'opacity ' + time + 'ms';
 	el.style.opacity = 0;
 	setTimeout(function () {
@@ -425,28 +426,32 @@ document.addEventListener('DOMContentLoaded', function () {
 	// Updates currentColour to the colour of the pixel at the
 	// mouse position
 	function setColourToMousePosition() {
+		// Get the pixel index from mouse x,y
 		var i = 4 * (mouse.y * W + mouse.x),
 			hex,
 			hsv;
 
-		currentColour.r = buffer.data[i];
-		currentColour.g = buffer.data[i + 1];
-		currentColour.b = buffer.data[i + 2];
-		currentColour.a = buffer.data[i + 3];
+		// Ensure colour under mouse is not transparent
+		if (buffer.data[i + 3] !== 0) {
+			// Get the rgba at the pixel index
+			currentColour.r = buffer.data[i];
+			currentColour.g = buffer.data[i + 1];
+			currentColour.b = buffer.data[i + 2];
+			currentColour.a = buffer.data[i + 3];
 
-		// Convert rgb back to hsv
-		hsv = rgb2hsv(currentColour);
+			// Convert rgb back to hsv
+			hsv = rgb2hsv(currentColour);
 
-		currentColour.h = hsv.h;
-		currentColour.s = hsv.s;
-		currentColour.v = hsv.v;
+			// Update currentColour hsv for redraws
+			currentColour.h = hsv.h;
+			currentColour.s = hsv.s;
+			currentColour.v = hsv.v;
 
-		hex = (currentColour.r << 16) + (currentColour.g << 8) + currentColour.b;
+			// Convert to hex number
+			hex = (currentColour.r << 16) + (currentColour.g << 8) + currentColour.b;
 
-		currentColour.hex = hex;
-
-		if (currentColour.a !== 0) {
-			setColour(hex);
+			// Set colour to this hex and hsv
+			setColour(hex, currentColour);
 		}
 	}
 
@@ -597,6 +602,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		intervalHandle = setInterval(setColourToMousePosition, timeInterval);
 	}
 
+	
 	function onDrag(e) {
 		// On mouse move, update the mouse coordinates relative to the canvas
 		var rect = canvas.getBoundingClientRect();
@@ -604,10 +610,37 @@ document.addEventListener('DOMContentLoaded', function () {
 		mouse.y = (e.clientY || e.targetTouches[0].pageY) - rect.top  | 0;
 	}
 
+	
 	function onDragEnd(e) {
 		// On mouseup, mouseout, touchend, end drag
 		clearInterval(intervalHandle);
 	}
+	
+	
+	function onScroll(e) {
+		// Get the current visibility
+		var v = currentColour.v, hex;
+
+		// Prevent default scrolling behaviour
+		e.preventDefault();
+		
+		// Adjust by the mouse wheel event
+		v += e.wheelDelta / 2000;
+
+		// Clamp v between 0.01 and 1
+		v = v > 1 ? 1 : v < 0.02 ? 0.02 : v;
+
+		// Set current visibility to the new value
+		currentColour.v = v;
+
+		// Redraw with the changes
+		draw();
+
+		// Set colour
+		hex = hsv2hex(currentColour);
+		setColour(hex, currentColour);
+	}
+	
 
 	// Attach a function to the on/off button
 	if (toggleInput) {
@@ -664,13 +697,15 @@ document.addEventListener('DOMContentLoaded', function () {
 			draw();
 
 			// Attach mouse and touch events to the canvas.
-			canvas.addEventListener('mousedown',       onDragStart);
-			canvas.addEventListener('mousemove',       onDrag);
-			canvas.addEventListener('mouseup',         onDragEnd);
-			document.body.addEventListener('mouseout', onDragEnd);
-			canvas.addEventListener('touchstart',      onDragStart);
-			canvas.addEventListener('touchmove',       onDrag);
-			canvas.addEventListener('touchend',        onDragEnd);
+			canvas.addEventListener('mousedown',       onDragStart, false);
+			canvas.addEventListener('mousemove',       onDrag,      false);
+			canvas.addEventListener('mouseup',         onDragEnd,   false);
+			document.body.addEventListener('mouseout', onDragEnd,   false);
+			canvas.addEventListener('touchstart',      onDragStart, false);
+			canvas.addEventListener('touchmove',       onDrag,      false);
+			canvas.addEventListener('touchend',        onDragEnd,   false);
+			canvas.addEventListener('mousewheel',      onScroll,    false);
+			canvas.addEventListener('dblclick',        changeMode,  false);
 		});
 	}
 });
