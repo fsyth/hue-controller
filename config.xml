@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<widget xmlns     = "http://www.w3.org/ns/widgets"
+		xmlns:gap = "http://phonegap.com/ns/1.0"
+		id        = "com.phonegap.blank"
+		version   = "0.0.0">
+
+	<name>Hue Controller</name>
+
+	<description>
+		Controls Hue Lights on your local network
+	</description>
+
+	<author href="" email="forsythjames@hotmail.co.uk">
+		James Forsyth
+	</author>
+
+	<content src="index.html" />
+	<access origin="*"/>
+
+</widget>
