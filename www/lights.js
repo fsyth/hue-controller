@@ -756,7 +756,9 @@ document.addEventListener('DOMContentLoaded', function () {
 			valInputs[1].style.display = 'inline';
 			break;
 
-		default:
+		case 'Hue':
+		case 'Saturation':
+		case 'Brightness':
 			// Show number input
 			valInputs[2].style.display = 'inline';
 			break;
@@ -797,6 +799,10 @@ document.addEventListener('DOMContentLoaded', function () {
 				doStuff({
 					bri: parseFloat(valueInputs[2].value) * 0xFF | 0
 				});
+				break;
+					
+			case 'Random':
+				setColour(0x1000000 * Math.random() | 0);
 				break;
 
 			case 'On/Off':

@@ -109,6 +109,7 @@ button:active {
 	left: 0;
 	background-color: rgba(70, 70, 70, 0.7);
 	color: #FFF;
+	z-index: 30;
 }
 
 #anim table {
@@ -118,8 +119,16 @@ button:active {
 	padding: 10px;
 }
 
+#anim table input:not([type=color]) {
+	margin: 4px;
+}
+
 #anim tr:first-child .delete-row.button {
 	visibility: hidden;
+}
+
+#anim td:not(:last-child) {
+	min-width: 110px;
 }
 
 #anim .delete-row.button {
@@ -129,7 +138,7 @@ button:active {
 
 #anim .close.button {
 	position: absolute;
-	left: 20px;
+	right: 20px;
 	top: 20px;
 }
 
@@ -144,7 +153,7 @@ button:active {
 	top: 0;
 	width: 100%;
 	background-color: rgba(70, 70, 70, 0.7);
-	z-index: 10;
+	z-index: 40;
 	height: 460px;
 	padding: 1.8% 0;
 	color: #FFF;
@@ -188,4 +197,44 @@ button:active {
 		-webkit-transform: rotate(359deg);
 		transform: rotate(359deg);
 	}
+}
+
+#help-button {
+	position: absolute;
+	top: 20px;
+	left: 20px;
+	z-index: 20;
+}
+
+#help-button:hover+#help {
+	display: block;
+}
+
+#help {
+	display: none;
+	position: absolute;
+	z-index: 10;
+	top: 0;
+	left: 0;
+	width: 100%;
+	background-color: rgba(70, 70, 70, 0.7);
+	color: #FFF;
+	padding: 50px 0 115px 0;
+	text-align: left;
+}
+
+#help h3, #help p {
+	margin-left: 120px;
+}
+
+#help .material-icons {
+	font-size: 130%;
+	line-height: 70%;
+	vertical-align: middle;
+}
+
+#help .keys, #help .material-icons {
+	background-color: #444;
+	border-radius: 5px;
+	padding: 4px;
 }
