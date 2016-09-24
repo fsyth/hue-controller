@@ -62,11 +62,36 @@ button, input, select {
 	margin: 0.2% 0;
 	background-color: #222;
 	color: #FFF;
-	border-radius: 5px;
-	border-width: 2px;
+	border-radius: 8px;
+	border: none;
 	width: 100px;
 	text-align: center;
+	vertical-align: middle;
+	outline: none;
 }
+
+button:active {
+	background-color: #333;
+}
+
+.button, .toggle {
+	color: #AAA;
+	transition: color 0.5s;
+	cursor: pointer;
+}
+
+.button:hover {
+	color: #FFF;
+}
+
+.toggle.checked {
+	color: #FFF;
+}
+
+.toggle:not(.checked) {
+	color: #666;
+}
+
 
 #anim {
 	position: absolute;
@@ -86,32 +111,24 @@ button, input, select {
 	padding: 10px;
 }
 
-#anim tr:first-child .delete-row {
+#anim tr:first-child .delete-row.button {
 	visibility: hidden;
 }
 
-#anim .delete-row {
+#anim .delete-row.button {
 	font-size: 100%;
-	color: #AAA;
-	cursor: pointer;
+	vertical-align: middle;
 }
 
-#anim .close-button {
+#anim .close.button {
 	position: absolute;
 	left: 20px;
 	top: 20px;
-	color: #777;
-	transition: color 1s;
-	cursor: pointer;
 }
 
-#anim .close-button:hover {
-	color: #FFF;
-}
-
-#anim #run-animation {
+#anim #play-animation, #anim #stop-animation {
 	margin: 1%;
-	cursor: pointer;
+	font-size: 200%;
 }
 
 #connecting {

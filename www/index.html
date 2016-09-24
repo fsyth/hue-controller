@@ -25,7 +25,7 @@
 		<button id="show-anim">Animations</button>
 	</div>
 	<div id="anim" class="hidden container fade-in">
-		<i class="material-icons close-button">close</i>
+		<i class="material-icons close button">close</i>
 		<h3>Create a custom animation sequence</h3>
 		<table id="anim-table">
 			<thead>
@@ -56,17 +56,18 @@
 						<input class="time" type="number" min="0" step="0.1" value="1">
 					</td>
 					<td>
-						<i class="delete-row material-icons">delete</i>
+						<i class="delete-row button material-icons">delete</i>
 					</td>
 				</tr>
 				<tr>
-					<td><button id="add-frame">Add frame</button></td>
-					<td>Loop:</td>
-					<td><input id="loop-anim" type="checkbox" checked></td>
+					<td><i id="add-frame" class="material-icons button" title="Add frame">playlist_add</i></td>
+					<td></td>
+					<td><i id="loop-anim" class="material-icons toggle checked" title="Loop" value="true">repeat</i></td>
 				</tr>
 			</tbody>
 		</table>
-		<i id="run-animation" class="material-icons" title="Run animation">input</i>
+		<i id="play-animation" class="material-icons button" title="Play animation">play_circle_outline</i>
+		<i id="stop-animation" class="material-icons button hidden" title="Stop animation">pause_circle_outline</i>
 	</div>
 </body>
 

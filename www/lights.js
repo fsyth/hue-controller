@@ -9,17 +9,11 @@
 var hue = {
 	ip: '192.168.1.185',
 	userId: 'qRZ0f2agZeihyCWSBBpWPRUpRg03n9VuXTcRHtHq',
-	lightNo: 2,
-	getUrl: function () {
-		'use strict';
-		//`http://$(this.ip)/api/$(this.userId)/lights/$(this.lightNo)`
-		return 'http://' + this.ip + '/api/' + this.userId + '/lights/' + this.lightNo;
-	},
-	putUrl: function () {
-		'use strict';
-		return this.getUrl() + '/state';
-	}
+	lightNo: 2
 };
+
+hue.getUrl = 'http://' + hue.ip + '/api/' + hue.userId + '/lights/' + hue.lightNo;
+hue.putUrl = hue.getUrl + '/state';
 
 
 /**************************
@@ -46,7 +40,7 @@ function doStuff(settings, responseHandler) {
 		}
 	};
 
-	xhr.open('PUT', hue.putUrl(), true);
+	xhr.open('PUT', hue.putUrl, true);
 
 	xhr.send(typeof settings === 'string' ? settings : JSON.stringify(settings));
 }
@@ -77,7 +71,7 @@ function getStuff(responseHandler) {
 		}
 	};
 
-	xhr.open('GET', hue.getUrl());
+	xhr.open('GET', hue.getUrl);
 	xhr.send();
 }
 
@@ -725,14 +719,19 @@ document.addEventListener('DOMContentLoaded', function () {
 	var anim = document.getElementById('anim'),
 		animTable = document.getElementById('anim-table'),
 		animTbody = document.getElementsByTagName('tbody')[0],
-		showAnimButton = document.getElementById('show-anim'),
+		toggleAnimButton = document.getElementById('show-anim'),
 		addFrameButton = document.getElementById('add-frame'),
 		paramSelect = anim.getElementsByClassName('param')[0],
 		valueInput = anim.getElementsByClassName('val')[0],
 		deleteRowButton = anim.getElementsByClassName('delete-row')[0],
-		animCloseButton = anim.getElementsByClassName('close-button')[0],
-		animRunButton = document.getElementById('run-animation'),
-		loop = document.getElementById('loop-anim');
+		animCloseButton = anim.getElementsByClassName('close')[0],
+		animPlayButton = document.getElementById('play-animation'),
+		animStopButton = document.getElementById('stop-animation'),
+		animTimeoutHandle,
+		animPlayFlag = true,
+		loop = document.getElementById('loop-anim'),
+		toggles = anim.getElementsByClassName('toggle'),
+		i;
 	
 	function paramChange(e) {
 		var row = e.target.parentElement.parentElement,
@@ -774,79 +773,85 @@ document.addEventListener('DOMContentLoaded', function () {
 			// Get the row at the index
 			var row = animTable.rows[index],
 				param = row.cells[0].getElementsByClassName('param')[0].value,
-				value,
+				valueInputs = row.cells[1].getElementsByClassName('val'),
 				time  = parseInt(row.cells[2].getElementsByClassName('time')[0].value, 10) * 1000;
 
 			switch (param) {
 			case 'Colour':
-				value = row.cells[1].getElementsByClassName('val')[0].value;
-				/*hsv = hex2hsv(value);
-				doStuff({
-					hue: hsv.h * 0xFFFF | 0,
-					sat: hsv.s * 0xFF   | 0,
-					bri: hsv.v * 0xFF   | 0
-				});*/
-				setColour(value);
+				setColour(valueInputs[0].value);
 				break;
 
 			case 'Hue':
-				value = 0xFFFF * parseFloat(row.cells[1].getElementsByClassName('val')[2].value);
 				doStuff({
-					hue: value
+					hue: parseFloat(valueInputs[2].value) * 0xFFFF | 0
 				});
 				break;
 
 			case 'Saturation':
-				value = 0xFF * parseFloat(row.cells[1].getElementsByClassName('val')[2].value);
 				doStuff({
-					sat: value
+					sat: parseFloat(valueInputs[2].value) * 0xFF | 0
 				});
 				break;
 
 			case 'Brightness':
-				value = 0xFF * parseFloat(row.cells[1].getElementsByClassName('val')[2].value);
 				doStuff({
-					bri: value
+					bri: parseFloat(valueInputs[2].value) * 0xFF | 0
 				});
 				break;
 
 			case 'On/Off':
-				value = row.cells[1].getElementsByClassName('val')[1].checked;
 				doStuff({
-					on: value
+					on: valueInputs[1].checked
 				});
 				break;
 			}
 			
-			// Run the next animation after the timeout
-			setTimeout(function () {
-				runAnimation(index + 1);
-			}, time);
+			// Only run the next animation frame if the flag is true
+			if (animPlayFlag) {
+				// Run the next animation after a timeout
+				animTimeoutHandle = setTimeout(function () {
+					runAnimation(index + 1);
+				}, time);
+			}
 			
 		} else {
-			// We have reach the row where the loop button is
-			if (loop.checked) {
-				// Go back to the start if loop is checked
-				setTimeout(function () {
-					runAnimation(1);
-				}, 0);
+			// We have reached the row where the loop button is
+			if (loop.classList.contains('checked')) {
+				// Go back to the start if loop is checked immediately
+				runAnimation(1);
 			}
 		}
 			
 	}
 	
-	paramSelect.addEventListener('change', paramChange, false);
-	deleteRowButton.addEventListener('click', deleteRow, false);
-	
-	showAnimButton.addEventListener('click', function () {
-		anim.style.display = anim.style.display === 'block' ? 'none' : 'block';
-	}, false);
-	
-	animCloseButton.addEventListener('click', function () {
-		anim.style.display = 'none';
-	}, false);
+	function playAnimation() {
+		// Clear any pre-existing animations, just in case
+		clearTimeout(animTimeoutHandle);
 		
-	addFrameButton.addEventListener('click', function () {
+		// Reset play flag to true
+		animPlayFlag = true;
+		
+		// Start animations from the top
+		runAnimation(1);
+		
+		// Hide play button and show stop button
+		animPlayButton.classList.add('hidden');
+		animStopButton.classList.remove('hidden');
+	}
+	
+	function stopAnimation() {
+		// Raise stop flag
+		animPlayFlag = false;
+		
+		// Stop the currently running animation
+		clearTimeout(animTimeoutHandle);
+		
+		// Show play button and hide stop button
+		animPlayButton.classList.remove('hidden');
+		animStopButton.classList.add('hidden');
+	}
+	
+	function addFrame() {
 		// Duplicate the penultimate row in the table
 		var index = animTable.rows.length - 2,
 			oldRow = animTable.rows[index],
@@ -865,13 +870,47 @@ document.addEventListener('DOMContentLoaded', function () {
 		
 		// Insert into table
 		animTbody.insertBefore(newRow, lastRow);
-	}, false);
+	}
 	
-	animRunButton.addEventListener('click', function () {
-		// Start animations from the top
-		var index = 1;
-		runAnimation(index);
-	}, false);
+	function showAnimationPane() {
+		anim.style.display = 'block';
+	}
+	
+	function closeAnimationPane() {
+		anim.style.display = 'none';
+		stopAnimation();
+	}
+	
+	function toggleAnimationPane() {
+		if (anim.style.display === 'block') {
+			closeAnimationPane();
+		} else {
+			showAnimationPane();
+		}
+	}
+	
+	// Toggle the clicked element between having .checked class or not
+	function toggleChecked(e) {
+		if (e.target.classList.contains('checked')) {
+			e.target.classList.remove('checked');
+		} else {
+			e.target.classList.add('checked');
+		}
+	}
+	
+	// Add click event listeners to all toggle buttons
+	for (i = 0; i < toggles.length; i += 1) {
+		toggles[i].addEventListener('click', toggleChecked, false);
+	}
+	
+	// Add event listeners to all other buttons
+	paramSelect.addEventListener('change', paramChange, false);
+	deleteRowButton.addEventListener('click', deleteRow, false);
+	toggleAnimButton.addEventListener('click', toggleAnimationPane, false);
+	animCloseButton.addEventListener('click', closeAnimationPane, false);
+	addFrameButton.addEventListener('click', addFrame, false);
+	animPlayButton.addEventListener('click', playAnimation, false);
+	animStopButton.addEventListener('click', stopAnimation, false);
 });
 
 
