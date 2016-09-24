@@ -58,6 +58,13 @@ canvas {
 	cursor: pointer;
 }
 
+#buttons-panel {
+	display: inline-block;
+	border-radius: 10px;
+	padding: 5px 10px;
+	background-color: rgba(70, 70, 70, 0.7);
+}
+
 button, input, select {
 	margin: 0.2% 0;
 	background-color: #222;
@@ -75,13 +82,13 @@ button:active {
 }
 
 .button, .toggle {
-	color: #AAA;
+	color: #CCC;
 	transition: color 0.5s;
 	cursor: pointer;
 }
 
 .button:hover {
-	color: #FFF;
+	color: #6FC;
 }
 
 .toggle.checked {

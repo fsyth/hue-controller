@@ -730,7 +730,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		animTimeoutHandle,
 		animPlayFlag = true,
 		loop = document.getElementById('loop-anim'),
-		toggles = anim.getElementsByClassName('toggle'),
+		toggles = document.getElementsByClassName('toggle'),
 		i;
 	
 	function paramChange(e) {
