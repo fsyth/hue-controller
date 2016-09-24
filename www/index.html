@@ -5,12 +5,17 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
 	<title>Hue Controller</title>
-	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+	<link rel="stylesheet" href="material-icons.css">
 	<link rel="stylesheet" href="index.css">
 	<script src="lights.js"></script>
 </head>
 
 <body>
+	<div id="connecting">
+		<span>Connecting to Hue Bridge...</span>
+		<br>
+		<i class="material-icons spin">autorenew</i>
+	</div>
 	<div class="fade-in container">
 		<div id="colour-wheel"></div>
 		<button id="toggle">On/Off</button>
@@ -43,12 +48,12 @@
 						</select>
 					</td>
 					<td class="val-td">
-						<input type="color" style="" value="#FFFFFF">
-						<input type="checkbox" style="display: none" checked>
-						<input type="number" min="0" max="1" step="0.1" style="display: none" value="1">
+						<input class="val" type="color" style="" value="#FFFFFF">
+						<input class="val" type="checkbox" style="display: none" checked>
+						<input class="val" type="number" min="0" max="1" step="0.1" style="display: none" value="1">
 					</td>
 					<td>
-						<input type="number" min="0" step="0.1" value="0">
+						<input class="time" type="number" min="0" step="0.1" value="1">
 					</td>
 					<td>
 						<i class="delete-row material-icons">delete</i>
@@ -57,11 +62,11 @@
 				<tr>
 					<td><button id="add-frame">Add frame</button></td>
 					<td>Loop:</td>
-					<td><input id="loop-anim" type="checkbox"></td>
+					<td><input id="loop-anim" type="checkbox" checked></td>
 				</tr>
 			</tbody>
 		</table>
-		<i class="run-animation material-icons" title="Coming soon...">play circle filled</i>
+		<i id="run-animation" class="material-icons" title="Run animation">input</i>
 	</div>
 </body>
 

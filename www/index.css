@@ -2,6 +2,9 @@ body {
 	transition: background-color 0.5s;
 	text-align: center;
 
+	margin: 0;
+	padding: 0;
+	
 	font-family: Arial, sans-serif;
 	
 	-webkit-touch-callout: none;
@@ -68,7 +71,7 @@ button, input, select {
 #anim {
 	position: absolute;
 	width: 100%;
-	padding: 125px 0;
+	padding: 125px 0 175px 0;
 	text-align: center;
 	top: 0;
 	left: 0;
@@ -93,7 +96,7 @@ button, input, select {
 	cursor: pointer;
 }
 
-#anim .close-button, #anim .run-animation {
+#anim .close-button {
 	position: absolute;
 	left: 20px;
 	top: 20px;
@@ -106,6 +109,59 @@ button, input, select {
 	color: #FFF;
 }
 
-#anim .run-animation {
-	
+#anim #run-animation {
+	margin: 1%;
+	cursor: pointer;
+}
+
+#connecting {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	background-color: rgba(70, 70, 70, 0.7);
+	z-index: 10;
+	height: 460px;
+	padding: 1.8% 0;
+	color: #FFF;
+	text-align: center;
+	cursor: default;
+}
+
+#connecting span {
+	display: inline-block;
+	margin-top: 120px;
+}
+
+#connecting .material-icons {
+	display: inline-block;
+	margin: 0 200px;
+	font-size: 700%;
+}
+
+.spin {
+	-webkit-animation: spin 2s infinite linear;
+	animation: spin 2s infinite linear;
+}
+
+@-webkit-keyframes spin {
+	0% {
+		-webkit-transform: rotate(0deg);
+		transform: rotate(0deg);
+	}
+	100% {
+		-webkit-transform: rotate(359deg);
+		transform: rotate(359deg);
+	}
+}
+
+@keyframes spin {
+	0% {
+		-webkit-transform: rotate(0deg);
+		transform: rotate(0deg);
+	}
+	100% {
+		-webkit-transform: rotate(359deg);
+		transform: rotate(359deg);
+	}
 }

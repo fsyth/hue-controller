@@ -672,6 +672,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		getStuff(function (res) {
 			var rgb, hex;
+			
+			// Received a response, so connected to Hue Bridge
+			document.getElementById('connecting').style.display = 'none';
 
 			// Update currentColour to the lights current state
 			currentColour.h = res.hue / 0xFFFF;
@@ -727,7 +730,9 @@ document.addEventListener('DOMContentLoaded', function () {
 		paramSelect = anim.getElementsByClassName('param')[0],
 		valueInput = anim.getElementsByClassName('val')[0],
 		deleteRowButton = anim.getElementsByClassName('delete-row')[0],
-		animCloseButton = anim.getElementsByClassName('close-button')[0];
+		animCloseButton = anim.getElementsByClassName('close-button')[0],
+		animRunButton = document.getElementById('run-animation'),
+		loop = document.getElementById('loop-anim');
 	
 	function paramChange(e) {
 		var row = e.target.parentElement.parentElement,
@@ -764,6 +769,72 @@ document.addEventListener('DOMContentLoaded', function () {
 		row.parentElement.removeChild(row);
 	}
 	
+	function runAnimation(index) {
+		if (index < animTable.rows.length - 1) {
+			// Get the row at the index
+			var row = animTable.rows[index],
+				param = row.cells[0].getElementsByClassName('param')[0].value,
+				value,
+				time  = parseInt(row.cells[2].getElementsByClassName('time')[0].value, 10) * 1000;
+
+			switch (param) {
+			case 'Colour':
+				value = row.cells[1].getElementsByClassName('val')[0].value;
+				/*hsv = hex2hsv(value);
+				doStuff({
+					hue: hsv.h * 0xFFFF | 0,
+					sat: hsv.s * 0xFF   | 0,
+					bri: hsv.v * 0xFF   | 0
+				});*/
+				setColour(value);
+				break;
+
+			case 'Hue':
+				value = 0xFFFF * parseFloat(row.cells[1].getElementsByClassName('val')[2].value);
+				doStuff({
+					hue: value
+				});
+				break;
+
+			case 'Saturation':
+				value = 0xFF * parseFloat(row.cells[1].getElementsByClassName('val')[2].value);
+				doStuff({
+					sat: value
+				});
+				break;
+
+			case 'Brightness':
+				value = 0xFF * parseFloat(row.cells[1].getElementsByClassName('val')[2].value);
+				doStuff({
+					bri: value
+				});
+				break;
+
+			case 'On/Off':
+				value = row.cells[1].getElementsByClassName('val')[1].checked;
+				doStuff({
+					on: value
+				});
+				break;
+			}
+			
+			// Run the next animation after the timeout
+			setTimeout(function () {
+				runAnimation(index + 1);
+			}, time);
+			
+		} else {
+			// We have reach the row where the loop button is
+			if (loop.checked) {
+				// Go back to the start if loop is checked
+				setTimeout(function () {
+					runAnimation(1);
+				}, 0);
+			}
+		}
+			
+	}
+	
 	paramSelect.addEventListener('change', paramChange, false);
 	deleteRowButton.addEventListener('click', deleteRow, false);
 	
@@ -778,15 +849,28 @@ document.addEventListener('DOMContentLoaded', function () {
 	addFrameButton.addEventListener('click', function () {
 		// Duplicate the penultimate row in the table
 		var index = animTable.rows.length - 2,
-			newRow = animTable.rows[index].cloneNode(true),
+			oldRow = animTable.rows[index],
+			newRow = oldRow.cloneNode(true),
 			lastRow = animTable.rows[index + 1];
 		
 		// Add event listeners
 		newRow.getElementsByClassName('delete-row')[0]
 			.addEventListener('click', deleteRow, false);
+		newRow.getElementsByClassName('param')[0]
+			.addEventListener('change', paramChange);
+		
+		// Match parameter select
+		newRow.getElementsByClassName('param')[0].value =
+			oldRow.getElementsByClassName('param')[0].value;
 		
 		// Insert into table
 		animTbody.insertBefore(newRow, lastRow);
+	}, false);
+	
+	animRunButton.addEventListener('click', function () {
+		// Start animations from the top
+		var index = 1;
+		runAnimation(index);
 	}, false);
 });
 
