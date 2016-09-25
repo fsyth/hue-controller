@@ -25,6 +25,9 @@ hue.putUrl = hue.getUrl + '/state';
  * @param settings - The light settings to be overwritten
  * @param responseHandler - a callback function whose first
  *                          argument contains the response
+ *
+ * Note: The callback is called asynchronously once the
+ * XMLHttpRequest responds.
  */
 function doStuff(settings, responseHandler) {
 	'use strict';
@@ -34,14 +37,13 @@ function doStuff(settings, responseHandler) {
 		if (this.readyState === 4 && this.status === 200) {
 			var res = JSON.parse(this.responseText);
 			//console.log(res[0]);
-			if (responseHandler === 'function') {
+			if (typeof responseHandler === 'function') {
 				responseHandler(res[0]);
 			}
 		}
 	};
 
 	xhr.open('PUT', hue.putUrl, true);
-
 	xhr.send(typeof settings === 'string' ? settings : JSON.stringify(settings));
 }
 
@@ -363,6 +365,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		colourInput = document.getElementById('colour'),
 		colourWheel = document.getElementById('colour-wheel'),
 		modeInput = document.getElementById('mode'),
+		resetButton = document.getElementById('reset-button'),
 		canvas,
 		ctx,
 		buffer,
@@ -656,6 +659,12 @@ document.addEventListener('DOMContentLoaded', function () {
 		modeInput.addEventListener('click', changeMode);
 	}
 
+	if (resetButton) {
+		resetButton.addEventListener('click', function () {
+			setColour('#C9FE6E');
+		});
+	}
+	
 	// Create a colour wheel to select from
 	if (colourWheel) {
 
@@ -671,9 +680,10 @@ document.addEventListener('DOMContentLoaded', function () {
 			document.getElementById('connecting').style.display = 'none';
 
 			// Update currentColour to the lights current state
+			// Set brightness to alteast 2% so colour wheel is visible.
 			currentColour.h = res.hue / 0xFFFF;
 			currentColour.s = res.sat / 0xFF;
-			currentColour.v = res.bri / 0xFF;
+			currentColour.v = Math.max(res.bri / 0xFF, 0.02);
 
 			// Convert to rgb to update the rest of current Colour
 			rgb = hsv2rgb(currentColour);
@@ -729,9 +739,18 @@ document.addEventListener('DOMContentLoaded', function () {
 		animStopButton = document.getElementById('stop-animation'),
 		animTimeoutHandle,
 		animPlayFlag = true,
+		frameIndicator = document.getElementById('frame-indicator'),
 		loop = document.getElementById('loop-anim'),
 		toggles = document.getElementsByClassName('toggle'),
-		i;
+		i,
+		currentColour = {
+			hsv: {
+				h: 0,
+				s: 0,
+				v: 1
+			},
+			on: true
+		};
 	
 	function paramChange(e) {
 		var row = e.target.parentElement.parentElement,
@@ -759,6 +778,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		case 'Hue':
 		case 'Saturation':
 		case 'Brightness':
+		case 'Temperature':
 			// Show number input
 			valInputs[2].style.display = 'inline';
 			break;
@@ -776,41 +796,75 @@ document.addEventListener('DOMContentLoaded', function () {
 			var row = animTable.rows[index],
 				param = row.cells[0].getElementsByClassName('param')[0].value,
 				valueInputs = row.cells[1].getElementsByClassName('val'),
-				time  = parseInt(row.cells[2].getElementsByClassName('time')[0].value, 10) * 1000;
+				time  = parseFloat(row.cells[2].getElementsByClassName('time')[0].value, 10) * 1000,
+				hsv;
 
-			switch (param) {
-			case 'Colour':
-				setColour(valueInputs[0].value);
-				break;
+			// Only make make changes if the light is on, or is about to be turned on
+			if (currentColour.on || param === 'On/Off') {
+				switch (param) {
+				case 'Colour':
+					currentColour.hsv = hex2hsv(valueInputs[0].value);
+					doStuff({
+						hue: currentColour.hsv.h * 0xFFFF | 0,
+						sat: currentColour.hsv.s * 0xFF   | 0,
+						bri: currentColour.hsv.v * 0xFF   | 0
+					});
+					break;
 
-			case 'Hue':
-				doStuff({
-					hue: parseFloat(valueInputs[2].value) * 0xFFFF | 0
-				});
-				break;
+				case 'Hue':
+					currentColour.hsv.h = parseFloat(valueInputs[2].value);
+					doStuff({
+						hue: currentColour.hsv.h * 0xFFFF | 0
+					});
+					break;
 
-			case 'Saturation':
-				doStuff({
-					sat: parseFloat(valueInputs[2].value) * 0xFF | 0
-				});
-				break;
+				case 'Saturation':
+					currentColour.hsv.s = parseFloat(valueInputs[2].value);
+					doStuff({
+						sat: currentColour.hsv.s * 0xFF | 0
+					});
+					break;
 
-			case 'Brightness':
-				doStuff({
-					bri: parseFloat(valueInputs[2].value) * 0xFF | 0
-				});
-				break;
-					
-			case 'Random':
-				setColour(0x1000000 * Math.random() | 0);
-				break;
+				case 'Brightness':
+					currentColour.hsv.v = parseFloat(valueInputs[2].value);
+					doStuff({
+						bri: currentColour.hsv.v * 0xFF | 0
+					});
+					break;
 
-			case 'On/Off':
-				doStuff({
-					on: valueInputs[1].checked
-				});
-				break;
+				case 'Temperature':
+					doStuff({
+						ct: parseFloat(valueInputs[2].value) * 347 + 153 | 0
+					});
+					break;
+
+				case 'Random':
+					currentColour.hsv = {
+						h: Math.random(),
+						s: Math.random(),
+						v: Math.random()
+					};
+					doStuff({
+						hue: currentColour.hsv.h * 0xFFFF | 0,
+						sat: currentColour.hsv.s * 0xFF   | 0,
+						bri: currentColour.hsv.v * 0xFF   | 0
+					});
+					break;
+
+				case 'On/Off':
+					currentColour.on = valueInputs[1].checked;
+					doStuff({
+						on: currentColour.on
+					});
+					frameIndicator.innerHTML = currentColour.on ? 'play_arrow' : 'clear';
+					break;
+				}
 			}
+			
+			// Move the frame indicator arrow
+			frameIndicator.style.top = (1.23 * index - 0.28) + 'em';
+			currentColour.hex = hsv2hex(currentColour.hsv);
+			frameIndicator.style.color = currentColour.hex;
 			
 			// Only run the next animation frame if the flag is true
 			if (animPlayFlag) {
@@ -837,8 +891,23 @@ document.addEventListener('DOMContentLoaded', function () {
 		// Reset play flag to true
 		animPlayFlag = true;
 		
-		// Start animations from the top
-		runAnimation(1);
+		// Ensure current colour is up to date
+		getStuff(function (res) {
+			currentColour = {
+				hsv: {
+					h: res.hue / 0xFFFF,
+					s: res.sat / 0xFF,
+					v: res.bri / 0xFF
+				},
+				on: res.on
+			};
+			
+			frameIndicator.innerHTML = currentColour.on ? 'play_arrow' : 'clear';
+			
+			// Start animations from the top
+			runAnimation(1);
+		});
+		
 		
 		// Hide play button and show stop button
 		animPlayButton.classList.add('hidden');

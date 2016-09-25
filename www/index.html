@@ -32,7 +32,7 @@
 		<table id="anim-table">
 			<thead>
 				<tr>
-					<th>Parameter</th>
+					<th><i id="frame-indicator" class="material-icons">play_arrow</i>Parameter</th>
 					<th>Value</th>
 					<th>Then wait (s)</th>
 					<th><!--Delete row buttons--></th>
@@ -46,6 +46,7 @@
 							<option>Hue</option>
 							<option>Saturation</option>
 							<option>Brightness</option>
+							<option>Temperature</option>
 							<option>Random</option>
 							<option>On/Off</option>
 						</select>
@@ -53,13 +54,13 @@
 					<td class="val-td">
 						<input class="val" type="color" style="" value="#FFFFFF">
 						<input class="val" type="checkbox" style="display: none" checked>
-						<input class="val" type="number" min="0" max="1" step="0.1" style="display: none" value="1">
+						<input class="val" type="range" min="0" max="1" step="0.1" style="display: none" value="1">
 					</td>
 					<td>
 						<input class="time" type="number" min="0" step="0.1" value="1">
 					</td>
 					<td>
-						<i class="delete-row button material-icons">delete</i>
+						<i class="delete-row button material-icons">delete_forever</i>
 					</td>
 				</tr>
 				<tr>
@@ -74,16 +75,19 @@
 	</div>
 	<i id="help-button" class="material-icons button">help_outline</i>
 	<div id="help" class="fade-in container">
-		<h3>Controls</h3>
-		<p><span class="keys">Click</span> or <span class="keys">Tap</span> on the colour wheel to set the Hue light to that colour.</p>
-		<p><span class="keys">Drag</span> to change the colour smoothly.</p>
-		<p>Click the <i class="material-icons">lightbulb_outline</i> button to change beween Colour Mode and Brightness Mode.</p>
-		<p>Alternatively, <span class="keys">Double-Click</span> the colour wheel to change modes.</p>
-		<p>You can also scroll the <span class="keys">Mouse Wheel</span> to adjust the brightness.</p>
-		<p>Click the <i class="material-icons">power_settings_new</i> icon to toggle the Hue light On and Off.</p>
-		<p>The <i class="material-icons">playlist_play</i> icon opens the animation pane.</p>
-		<p>Here you can specify a sequence of instructions using the animation table.</p>
+		<div class="centre">
+			<h3>Controls</h3>
+			<p><span class="keys">Click</span> or <span class="keys">Tap</span> on the colour wheel to set the Hue light to that colour.</p>
+			<p><span class="keys">Drag</span> to change the colour smoothly.</p>
+			<p>Click the <i class="material-icons">lightbulb_outline</i> button to change beween Colour Mode and Brightness Mode.</p>
+			<p>Alternatively, <span class="keys">Double-Click</span> the colour wheel to change modes.</p>
+			<p>You can also scroll the <span class="keys">Mouse Wheel</span> to adjust the brightness.</p>
+			<p>Click the <i class="material-icons">power_settings_new</i> icon to toggle the Hue light On and Off.</p>
+			<p>The <i class="material-icons">playlist_play</i> icon opens the animation pane.</p>
+			<p>Here you can specify a sequence of instructions using the animation table.</p>
+		</div>
 	</div>
+	<i id="reset-button" class="material-icons button" title="Reset to default colour">settings_backup_restore</i>
 </body>
 
 </html>
