@@ -17,14 +17,23 @@
 		<i class="material-icons spin">autorenew</i>
 	</div>
 	<div class="fade-in container">
+		<div class="carousel">
+			<i id="carousel-gamut" class="material-icons button" title="Colour gamut">signal_cellular_null</i>
+			<i id="carousel-ct" class="material-icons button" title="Temperature">whatshot</i>
+			<i id="carousel-colour-wheel" class="material-icons button selected" title="Colour wheel">palette</i>
+			<i id="carousel-image" class="material-icons button" title="Image">image</i>
+			<i id="carousel-colour-loop" class="material-icons button" title="Colour Loop">rotate_right</i>
+			<div id="carousel-selection"></div>
+		</div>
 		<div id="colour-wheel"></div>
 		<div id="buttons-panel">
 			<i id="mode" class="material-icons button" title="Colour/Brightness">lightbulb_outline</i>
 			<i id="toggle" class="material-icons button" title="On/Off">power_settings_new</i>
+			<i id="reset-button" class="material-icons button" title="Reset to default colour">settings_backup_restore</i>
 			<i id="show-anim" class="material-icons button" title="Animations">playlist_play</i>
 		</div>
-		<br>
-		<input id="colour" type="color" class="hidden" value="#FFFFFF">
+		<!--br>
+		<input id="colour" type="color" class="hidden" value="#FFFFFF"-->
 	</div>
 	<div id="anim" class="hidden container fade-in">
 		<i class="material-icons close button">close</i>
@@ -87,7 +96,6 @@
 			<p>Here you can specify a sequence of instructions using the animation table.</p>
 		</div>
 	</div>
-	<i id="reset-button" class="material-icons button" title="Reset to default colour">settings_backup_restore</i>
 </body>
 
 </html>

@@ -366,6 +366,15 @@ document.addEventListener('DOMContentLoaded', function () {
 		colourWheel = document.getElementById('colour-wheel'),
 		modeInput = document.getElementById('mode'),
 		resetButton = document.getElementById('reset-button'),
+		carousel = document.getElementById('carousel'),
+		carouselSelection = document.getElementById('carousel-selection'),
+		carouselButtons = {
+			wheel: document.getElementById('carousel-colour-wheel'),
+			ct: document.getElementById('carousel-ct'),
+			image: document.getElementById('carousel-image'),
+			gamut: document.getElementById('carousel-gamut'),
+			loop: document.getElementById('carousel-colour-loop')
+		},
 		canvas,
 		ctx,
 		buffer,
@@ -640,6 +649,18 @@ document.addEventListener('DOMContentLoaded', function () {
 		setColour(hex, currentColour);
 	}
 	
+	function moveCarouselSelectionTo(element) {
+		/*var children = element.parentElement.getElementsByClassName('material-icons'),
+			index = [].indexOf.call(children, element);
+		carouselSelection.style.left = index * (100 / children.length + 0.5) + '%';*/
+		var siblings = element.parentElement.children,
+			i;
+		// Remove .selected class from all elements
+		for (i = 0; i < siblings.length; i += 1) {
+			siblings[i].classList.remove('selected');
+		}
+		element.classList.add('selected');
+	}
 
 	// Attach a function to the on/off button
 	if (toggleInput) {
@@ -659,6 +680,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		modeInput.addEventListener('click', changeMode);
 	}
 
+	// Attach a function to the reset button
 	if (resetButton) {
 		resetButton.addEventListener('click', function () {
 			setColour('#C9FE6E');
@@ -716,6 +738,36 @@ document.addEventListener('DOMContentLoaded', function () {
 			canvas.addEventListener('mousewheel',      onScroll,    false);
 			canvas.addEventListener('dblclick',        changeMode,  false);
 		});
+	}
+	
+	if (carouselButtons.wheel) {
+		carouselButtons.wheel.addEventListener('click', function (e) {
+			moveCarouselSelectionTo(e.target);
+		}, false);
+	}
+	
+	if (carouselButtons.ct) {
+		carouselButtons.ct.addEventListener('click', function (e) {
+			moveCarouselSelectionTo(e.target);
+		}, false);
+	}
+	
+	if (carouselButtons.gamut) {
+		carouselButtons.gamut.addEventListener('click', function (e) {
+			moveCarouselSelectionTo(e.target);
+		}, false);
+	}
+	
+	if (carouselButtons.image) {
+		carouselButtons.image.addEventListener('click', function (e) {
+			moveCarouselSelectionTo(e.target);
+		}, false);
+	}
+	
+	if (carouselButtons.loop) {
+		carouselButtons.loop.addEventListener('click', function (e) {
+			moveCarouselSelectionTo(e.target);
+		}, false);
 	}
 });
 
