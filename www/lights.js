@@ -82,6 +82,12 @@ function getStuff(responseHandler) {
    Colour Conversions
  *********************/
 
+function clamp(num, min, max) {
+	'use strict';
+	return num < min ? min : num > max ? max : num;
+}
+
+
 /*
  * Converts values of hue, saturation and visibility to
  * red blue and green
@@ -295,6 +301,45 @@ function hsv2hex(h, s, v) {
 }
 
 
+/*
+ * Converts colour temperature to rgb format
+ */
+function ct2rgb(ct) {
+	'use strict';
+	ct /= 100;
+
+	var r, g, b;
+
+	if (ct <= 66) {
+		r = 255;
+
+		g = ct;
+		g = 99.4708025861 * Math.log(g) - 161.1195681661;
+
+		if (ct <= 19) {
+			b = 0;
+		} else {
+			b = ct - 10;
+			b = 138.5177312231 * Math.log(b) - 305.0447927307;
+		}
+	} else {
+		r = ct - 60;
+		r = 329.698727446 * Math.pow(r, -0.1332047592);
+
+		g = ct - 60;
+		g = 288.1221695283 * Math.pow(g, -0.0755148492);
+
+		b = 255;
+	}
+
+	return {
+		r: clamp(r, 0, 0xFF) | 0,
+		g: clamp(g, 0, 0xFF) | 0,
+		b: clamp(b, 0, 0xFF) | 0
+	};
+}
+
+
 /*********************
    Example functions
  *********************/
@@ -387,7 +432,9 @@ document.addEventListener('DOMContentLoaded', function () {
 		r,
 		t,
 		mode = 0,
-		modes = [ 'hue-sat', 'bri' ],
+		modes = [ 'colour', 'bri' ],
+		gamut = 0,
+		gamuts = [ 'hue-sat', 'temperature', 'image', 'gamut', 'loop' ],
 		currentColour = {
 			h: 0,
 			s: 0,
@@ -414,17 +461,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		hsv = hsv || hex2hsv(hex);
 
-		doStuff({
-			hue: hsv.h * 0xFFFF | 0,
-			sat: hsv.s * 0xFF | 0,
-			bri: hsv.v * 0xFF | 0
-		});
-
-		document.body.style.backgroundColor = hexStr;
-
 		currentColour.h = hsv.h;
 		currentColour.s = hsv.s;
 		currentColour.v = hsv.v;
+
+		if (gamuts[gamut] === 'temperature') {
+			// Special case for temperature, instead set ct directly
+			// instead of hsv
+			doStuff({
+				ct: (1 - (mouse.y / H)) * 347 + 153 | 0
+			});
+		} else {
+			// Send the request to the light
+			doStuff({
+				hue: hsv.h * 0xFFFF | 0,
+				sat: hsv.s * 0xFF   | 0,
+				bri: hsv.v * 0xFF   | 0
+			});
+		}
+
+		document.body.style.backgroundColor = hexStr;
 
 		if (colourInput) {
 			colourInput.value = hexStr;
@@ -439,7 +495,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			hex,
 			hsv;
 
-		// Ensure colour under mouse is not transparent
+		// Ensure pixel under mouse is not transparent
 		if (buffer.data[i + 3] !== 0) {
 			// Get the rgba at the pixel index
 			currentColour.r = buffer.data[i];
@@ -498,7 +554,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			r = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
 
 			// For certain radii, we can simplify calculations
-			if (r >= radius) {
+			if (r >= radius + 2) {
 				// Outside of the circle, set to transparent
 				buffer.data[i]     = 0;
 				buffer.data[i + 1] = 0;
@@ -547,7 +603,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			// Convert x,y to radius from centre of the cirlce
 			r = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
 
-			if (r >= radius) {
+			if (r >= radius + 2) {
 				// Outside of the circle, set to transparent
 				buffer.data[i]     = 0;
 				buffer.data[i + 1] = 0;
@@ -571,6 +627,41 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	}
 
+	function drawTemperatureScale() {
+		var i, ct, rgb;
+		for (i = 0; i < buffer.data.length; i += 4) {
+			// Calculate the x,y pixel coordinates
+			x = i / 4 % W | 0;
+			y = i / 4 / W | 0;
+			
+			// Convert x,y to radius from centre of the cirlce
+			r = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
+			
+			if (r >= radius + 2) {
+				// Outside of the circle, set to transparent
+				buffer.data[i]     = 0;
+				buffer.data[i + 1] = 0;
+				buffer.data[i + 2] = 0;
+				buffer.data[i + 3] = 0;
+			} else {
+				// Adjust the temperature of the current based on height y
+				ct = (y / H) * 6500 + 2000;
+				
+				// Convert to rbg
+				rgb = ct2rgb(ct);
+
+				// Adjust the darkness of the colour based on v
+				buffer.data[i]     = rgb.r * currentColour.v | 0;
+				buffer.data[i + 1] = rgb.g * currentColour.v | 0;
+				buffer.data[i + 2] = rgb.b * currentColour.v | 0;
+				buffer.data[i + 3] = 0xFF;
+			}
+		}
+	}
+	
+	function drawImage() {
+		
+	}
 
 	// Renders the buffer to the canvas
 	function renderBuffer() {
@@ -581,8 +672,20 @@ document.addEventListener('DOMContentLoaded', function () {
 	// Draws everything depending on which mode is selected
 	function draw() {
 		switch (modes[mode]) {
-		case 'hue-sat':
-			drawColourWheel();
+		case 'colour':
+			switch (gamuts[gamut]) {
+			case 'hue-sat':
+				drawColourWheel();
+				break;
+					
+			case 'temperature':
+				drawTemperatureScale();
+				break;
+					
+			case 'image':
+				drawImage();
+				break;
+			}
 			break;
 
 		case 'bri':
@@ -636,7 +739,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		v += e.wheelDelta / 2000;
 
 		// Clamp v between 0.01 and 1
-		v = v > 1 ? 1 : v < 0.02 ? 0.02 : v;
+		v = clamp(v, 0.01, 1);
 
 		// Set current visibility to the new value
 		currentColour.v = v;
@@ -647,19 +750,6 @@ document.addEventListener('DOMContentLoaded', function () {
 		// Set colour
 		hex = hsv2hex(currentColour);
 		setColour(hex, currentColour);
-	}
-	
-	function moveCarouselSelectionTo(element) {
-		/*var children = element.parentElement.getElementsByClassName('material-icons'),
-			index = [].indexOf.call(children, element);
-		carouselSelection.style.left = index * (100 / children.length + 0.5) + '%';*/
-		var siblings = element.parentElement.children,
-			i;
-		// Remove .selected class from all elements
-		for (i = 0; i < siblings.length; i += 1) {
-			siblings[i].classList.remove('selected');
-		}
-		element.classList.add('selected');
 	}
 
 	// Attach a function to the on/off button
@@ -683,7 +773,8 @@ document.addEventListener('DOMContentLoaded', function () {
 	// Attach a function to the reset button
 	if (resetButton) {
 		resetButton.addEventListener('click', function () {
-			setColour('#C9FE6E');
+			setColour(0xC9FE6E);
+			draw();
 		});
 	}
 	
@@ -740,33 +831,52 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 	}
 	
+	function moveCarouselSelectionTo(element) {
+		/*var children = element.parentElement.getElementsByClassName('material-icons'),
+			index = [].indexOf.call(children, element);
+		carouselSelection.style.left = index * (100 / children.length + 0.5) + '%';*/
+		var siblings = element.parentElement.children,
+			i;
+		// Remove .selected class from all elements
+		for (i = 0; i < siblings.length; i += 1) {
+			siblings[i].classList.remove('selected');
+		}
+		element.classList.add('selected');
+	}
+	
+	function changeGamut(button, gamutIndex) {
+		moveCarouselSelectionTo(button);
+		gamut = gamutIndex;
+		draw();
+	}
+	
 	if (carouselButtons.wheel) {
 		carouselButtons.wheel.addEventListener('click', function (e) {
-			moveCarouselSelectionTo(e.target);
+			changeGamut(e.target, 0);
 		}, false);
 	}
 	
 	if (carouselButtons.ct) {
 		carouselButtons.ct.addEventListener('click', function (e) {
-			moveCarouselSelectionTo(e.target);
-		}, false);
-	}
-	
-	if (carouselButtons.gamut) {
-		carouselButtons.gamut.addEventListener('click', function (e) {
-			moveCarouselSelectionTo(e.target);
+			changeGamut(e.target, 1);
 		}, false);
 	}
 	
 	if (carouselButtons.image) {
 		carouselButtons.image.addEventListener('click', function (e) {
-			moveCarouselSelectionTo(e.target);
+			changeGamut(e.target, 2);
+		}, false);
+	}
+	
+	if (carouselButtons.gamut) {
+		carouselButtons.gamut.addEventListener('click', function (e) {
+			changeGamut(e.target, 3);
 		}, false);
 	}
 	
 	if (carouselButtons.loop) {
 		carouselButtons.loop.addEventListener('click', function (e) {
-			moveCarouselSelectionTo(e.target);
+			changeGamut(e.target, 4);
 		}, false);
 	}
 });

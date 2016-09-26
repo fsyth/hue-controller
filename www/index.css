@@ -48,6 +48,37 @@ body {
 	animation-duration: 0.5s;
 }
 
+@-webkit-keyframes fadeOut {
+	from { opacity: 1; }
+	to   { opacity: 0; }
+}
+
+@-moz-keyframes fadeOut {
+	from { opacity: 1; }
+	to   { opacity: 0; }
+}
+
+@keyframes fadeOut {
+	from { opacity: 1; }
+	to   { opacity: 0; }
+}
+
+.fade-out {
+	opacity: 1;
+
+	-webkit-animation: fadeOut ease-in 1;
+	-moz-animation: fadeOut ease-in 1;
+	animation: fadeOut ease-in 1;
+
+	-webkit-animation-fill-mode: forwards;
+	-moz-animation-fill-mode: forwards;
+	animation-fill-mode: forwards;
+
+	-webkit-animation-duration: 0.5s;
+	-moz-animation-duration: 0.5s;
+	animation-duration: 0.5s;
+}
+
 .hidden {
 	display: none;
 }
@@ -58,6 +89,7 @@ body {
 
 canvas {
 	cursor: pointer;
+	border-radius: 200px;
 }
 
 #buttons-panel {
@@ -362,7 +394,7 @@ input[type=range]:focus::-ms-fill-upper {
 #help .centre {
 	display: block;
 	margin: auto;
-	width: 70%;
+	width: 440px;
 }
 
 #help .material-icons {
@@ -385,12 +417,31 @@ input[type=range]:focus::-ms-fill-upper {
 }
 
 .carousel {
-	display: inline-block
+	display: inline-block;
+}
+
+.carousel:not(:hover) .button:not(.selected) {
+	-webkit-animation: fadeOut ease-in 1;
+	-moz-animation: fadeOut ease-in 1;
+	animation: fadeOut ease-in 1;
+
+	-webkit-animation-fill-mode: forwards;
+	-moz-animation-fill-mode: forwards;
+	animation-fill-mode: forwards;
+
+	-webkit-animation-duration: 0.2s;
+	-moz-animation-duration: 0.2s;
+	animation-duration: 0.2s;
+	
+	position: absolute;
+	z-index: -10;
 }
 
 .carousel .button {
 	transition: border 0.2s, color 0.2s;
 	color: #CCC;
+	display: block;
+	float: left;
 }
 
 .carousel .button.selected {
