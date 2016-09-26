@@ -220,8 +220,8 @@ input[type=range]:focus::-ms-fill-upper {
 	margin: 4px;
 }
 
-#anim tr:first-child .delete-row.button {
-	visibility: hidden;
+#anim tr:first-child:nth-last-child(2) .delete-row.button {
+    visibility: hidden;
 }
 
 #anim td:not(:last-child) {
@@ -390,7 +390,7 @@ input[type=range]:focus::-ms-fill-upper {
 
 .carousel .button {
 	transition: border 0.2s, color 0.2s;
-	color: #444;
+	color: #CCC;
 }
 
 .carousel .button.selected {
