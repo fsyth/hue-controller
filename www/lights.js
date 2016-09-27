@@ -450,7 +450,8 @@ document.addEventListener('DOMContentLoaded', function () {
 			y: 0
 		},
 		intervalHandle,
-		timeInterval = 100;
+		timeInterval = 100,
+		userImage = new Image();
 
 
 	// Set the colour to the current colour
@@ -645,7 +646,7 @@ document.addEventListener('DOMContentLoaded', function () {
 				buffer.data[i + 3] = 0;
 			} else {
 				// Adjust the temperature of the current based on height y
-				ct = (y / H) * 6500 + 2000;
+				ct = (y / H) * 5000 + 2000;
 				
 				// Convert to rbg
 				rgb = ct2rgb(ct);
@@ -660,7 +661,20 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 	
 	function drawImage() {
+		var i;
 		
+		// Draw the image
+		ctx.drawImage(userImage, 0, 0, W, H);
+		
+		// Put the image data into the buffer
+		buffer = ctx.getImageData(0, 0, W, H);
+		
+		// Adjust brightness
+		/*for (i = 0; i < buffer.data.length; i += 4) {
+			buffer.data[i]     *= currentColour.v;
+			buffer.data[i + 1] *= currentColour.v;
+			buffer.data[i + 2] *= currentColour.v;
+		}*/
 	}
 
 	// Renders the buffer to the canvas
@@ -692,7 +706,12 @@ document.addEventListener('DOMContentLoaded', function () {
 			drawBrightnessSlider();
 			break;
 		}
+		
+		//if (gamuts[gamut] !== 'image') {
+			// Image mode renders directly to the canvas.
+			// All other modes render to the buffer so still need rendering.
 		renderBuffer();
+		//}
 	}
 
 
@@ -864,7 +883,21 @@ document.addEventListener('DOMContentLoaded', function () {
 	
 	if (carouselButtons.image) {
 		carouselButtons.image.addEventListener('click', function (e) {
-			changeGamut(e.target, 2);
+			userImage.onload = function () {
+				changeGamut(e.target, 2);
+			};
+			
+			// Load custom image
+			var imageInput = document.createElement('input');
+			imageInput.setAttribute('type', 'file');
+			imageInput.setAttribute('accept', 'image');
+			
+			imageInput.onchange = function (e) {
+				userImage.src = window.URL.createObjectURL(e.path[0].files[0]);
+			};
+			
+			imageInput.click();
+			
 		}, false);
 	}
 	
