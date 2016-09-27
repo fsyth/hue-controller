@@ -491,11 +491,12 @@ document.addEventListener('DOMContentLoaded', function () {
 		currentColour.s = hsv.s;
 		currentColour.v = hsv.v;
 
-		if (gamuts[gamut] === 'temperature') {
+		if (gamuts[gamut] === 'temperature' && modes[mode] === 'colour') {
 			// Special case for temperature, instead set ct directly
 			// instead of hsv
 			doStuff({
-				ct: (1 - (mouse.y / H)) * 347 + 153 | 0
+				ct: (1 - (mouse.y / H)) * 347 + 153 | 0,
+				bri: currentColour.v * 0xFF | 0
 			});
 		} else {
 			// Send the request to the light
