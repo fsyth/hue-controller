@@ -318,6 +318,10 @@ input[type=range]:focus::-ms-fill-upper {
 	font-size: 700%;
 }
 
+#connecting #connecting-skip {
+	font-size: 70%;
+}
+
 .spin {
 	-webkit-animation: spin 2s infinite linear;
 	animation: spin 2s infinite linear;

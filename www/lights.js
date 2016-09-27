@@ -56,20 +56,43 @@ function doStuff(settings, responseHandler) {
  * Note: The callback is called asynchronously once the
  * XMLHttpRequest responds.
  */
-function getStuff(responseHandler) {
+function getStuff(responseHandler, errorHandler) {
 	'use strict';
 	var xhr = new XMLHttpRequest();
 
 	xhr.onreadystatechange = function () {
-		if (this.readyState === 4 && this.status === 200) {
-			var res = JSON.parse(this.responseText);
-			//console.log(res.state);
-			if (typeof responseHandler === 'function') {
-				/*if (!res.state.on) {
-					console.log('Light will respond to changes once turned on.');
-				}*/
-				responseHandler(res.state);
-			}
+		if (this.readyState === 4) {
+			// If complete
+			if (this.status === 200) {
+				// If successful
+				var res = JSON.parse(this.responseText);
+				//console.log(res.state);
+				if (res[0] && res[0].error) {
+					// An error occurred so alert it
+					console.log('An error occurred when getting data from the Hue Bridge:\n' +
+								res[0].error.description);
+
+					if (typeof errorHandler === 'function') {
+						errorHandler(res[0].error);
+					}
+				} else if (typeof responseHandler === 'function') {
+					// Call the response handler and pass in the state object
+					responseHandler(res.state);
+				}
+			}/* else {
+				// Unsuccessful xhr
+				console.log(this);
+				if (typeof errorHandler === 'function') {
+					errorHandler(this.statusText);
+				}
+			}*/
+		}
+	};
+	
+	xhr.onerror = function () {
+		// Unsuccessful xhr
+		if (typeof errorHandler === 'function') {
+			errorHandler(this.statusText);
 		}
 	};
 
@@ -420,6 +443,8 @@ document.addEventListener('DOMContentLoaded', function () {
 			gamut: document.getElementById('carousel-gamut'),
 			loop: document.getElementById('carousel-colour-loop')
 		},
+		connectingSplashscreen = document.getElementById('connecting'),
+		connectingSkip = document.getElementById('connecting-skip'),
 		canvas,
 		ctx,
 		buffer,
@@ -771,6 +796,11 @@ document.addEventListener('DOMContentLoaded', function () {
 		setColour(hex, currentColour);
 	}
 
+	function skipConnecting() {
+		connectingSplashscreen.style.display = 'none';
+		window.alert('Please note: Hue lights may not respond.');
+	}
+	
 	// Attach a function to the on/off button
 	if (toggleInput) {
 		toggleInput.addEventListener('click', toggle);
@@ -809,7 +839,9 @@ document.addEventListener('DOMContentLoaded', function () {
 			var rgb, hex;
 			
 			// Received a response, so connected to Hue Bridge
-			document.getElementById('connecting').style.display = 'none';
+			if (connectingSplashscreen) {
+				connectingSplashscreen.style.display = 'none';
+			}
 
 			// Update currentColour to the lights current state
 			// Set brightness to alteast 2% so colour wheel is visible.
@@ -836,18 +868,22 @@ document.addEventListener('DOMContentLoaded', function () {
 			// Then draw the colour wheel or the brightness slider
 			// now that current colour has been updated.
 			draw();
-
-			// Attach mouse and touch events to the canvas.
-			canvas.addEventListener('mousedown',       onDragStart, false);
-			canvas.addEventListener('mousemove',       onDrag,      false);
-			canvas.addEventListener('mouseup',         onDragEnd,   false);
-			document.body.addEventListener('mouseout', onDragEnd,   false);
-			canvas.addEventListener('touchstart',      onDragStart, false);
-			canvas.addEventListener('touchmove',       onDrag,      false);
-			canvas.addEventListener('touchend',        onDragEnd,   false);
-			canvas.addEventListener('mousewheel',      onScroll,    false);
-			canvas.addEventListener('dblclick',        changeMode,  false);
+		}, function (err) {
+			// Error occurred
+			connectingSplashscreen.innerHTML = '<span>An error occurred getting data from the Hue Bridge:</span><br>' + err.description + '<br>';
+			connectingSplashscreen.appendChild(connectingSkip);
 		});
+		
+		// Attach mouse and touch events to the canvas.
+		canvas.addEventListener('mousedown',       onDragStart, false);
+		canvas.addEventListener('mousemove',       onDrag,      false);
+		canvas.addEventListener('mouseup',         onDragEnd,   false);
+		document.body.addEventListener('mouseout', onDragEnd,   false);
+		canvas.addEventListener('touchstart',      onDragStart, false);
+		canvas.addEventListener('touchmove',       onDrag,      false);
+		canvas.addEventListener('touchend',        onDragEnd,   false);
+		canvas.addEventListener('mousewheel',      onScroll,    false);
+		canvas.addEventListener('dblclick',        changeMode,  false);
 	}
 	
 	function moveCarouselSelectionTo(element) {
@@ -911,6 +947,10 @@ document.addEventListener('DOMContentLoaded', function () {
 		carouselButtons.loop.addEventListener('click', function (e) {
 			changeGamut(e.target, 4);
 		}, false);
+	}
+	
+	if (connectingSkip) {
+		connectingSkip.addEventListener('click', skipConnecting, false);
 	}
 });
 
@@ -985,6 +1025,10 @@ document.addEventListener('DOMContentLoaded', function () {
 		row.parentElement.removeChild(row);
 	}
 	
+	function setFrameIndicatorSymbol() {
+		frameIndicator.innerHTML = currentColour.on ? 'play_arrow' : 'clear';
+	}
+	
 	function runAnimation(index) {
 		if (index < animTable.rows.length - 1) {
 			// Get the row at the index
@@ -1051,7 +1095,7 @@ document.addEventListener('DOMContentLoaded', function () {
 					doStuff({
 						on: currentColour.on
 					});
-					frameIndicator.innerHTML = currentColour.on ? 'play_arrow' : 'clear';
+					setFrameIndicatorSymbol();
 					break;
 				}
 			}
@@ -1097,9 +1141,17 @@ document.addEventListener('DOMContentLoaded', function () {
 				on: res.on
 			};
 			
-			frameIndicator.innerHTML = currentColour.on ? 'play_arrow' : 'clear';
-			
+			setFrameIndicatorSymbol();
+
 			// Start animations from the top
+			runAnimation(1);
+		}, function (err) {
+			// An error occurred so lights may not respond
+			window.alert('An error occurred when getting data from the Hue Bridge:\n' + err.description);
+			
+			// Play animations anyway but with current colour set to off
+			currentColour.on = false;
+			setFrameIndicatorSymbol();
 			runAnimation(1);
 		});
 		
