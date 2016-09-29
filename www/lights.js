@@ -61,34 +61,25 @@ function getStuff(responseHandler, errorHandler) {
 	var xhr = new XMLHttpRequest();
 
 	xhr.onreadystatechange = function () {
-		if (this.readyState === 4) {
-			// If complete
-			if (this.status === 200) {
-				// If successful
-				var res = JSON.parse(this.responseText);
-				//console.log(res.state);
-				if (res[0] && res[0].error) {
-					// An error occurred so alert it
-					console.log('An error occurred when getting data from the Hue Bridge:\n' +
-								res[0].error.description);
+		// If complete and succesful
+		if (this.readyState === 4 && this.status === 200) {
+			var res = JSON.parse(this.responseText);
+			//console.log(res.state);
+			if (res[0] && res[0].error) {
+				// An error occurred so alert it
+				console.log('An error occurred when getting data from the Hue Bridge:\n' +
+							res[0].error.description);
 
-					if (typeof errorHandler === 'function') {
-						errorHandler(res[0].error);
-					}
-				} else if (typeof responseHandler === 'function') {
-					// Call the response handler and pass in the state object
-					responseHandler(res.state);
-				}
-			}/* else {
-				// Unsuccessful xhr
-				console.log(this);
 				if (typeof errorHandler === 'function') {
-					errorHandler(this.statusText);
+					errorHandler(res[0].error);
 				}
-			}*/
+			} else if (typeof responseHandler === 'function') {
+				// Call the response handler and pass in the state object
+				responseHandler(res.state);
+			}
 		}
 	};
-	
+
 	xhr.onerror = function () {
 		// Unsuccessful xhr
 		if (typeof errorHandler === 'function') {
@@ -118,7 +109,7 @@ function clamp(num, min, max) {
  * @param s - the saturation component of the colour (range 0-1)
  * @param v - the visibility component of the colour (range 0-1)
  * -OR-
- * @param h - an object {h, s, v}
+ * @param h - an object { h, s, v }
  *
  * @returns { r, g, b } - an object containing the values for
  *                        red, green and blue (range 0-255)
@@ -193,7 +184,7 @@ function hsv2rgb(h, s, v) {
  * @param g - the green component of the colour (range 0-255)
  * @param b - the blue component of the colour (range 0-255)
  * -OR-
- * @param r - an object {r, g, b}
+ * @param r - an object { r, g, b }
  *
  * @returns { h, s, v } - an object containing the values for
  *                        hue, saturation and visibility (range 0-1)
@@ -403,7 +394,6 @@ function setColour(hex) {
    Colour wheel demo
  *********************/
 
-
 /*
  * Fade out, then fade in animation
  * @param el - the element to animate
@@ -484,7 +474,14 @@ document.addEventListener('DOMContentLoaded', function () {
 		currentImage = new Image();
 
 
-	// Set the colour to the current colour
+	/*
+	 * Set the colour to the current colour
+	 * @param hex - a 6 digit hex string or number for the colour to set
+	 * @param hsv - optional, an object { h, s, v } containing the hue,
+	 *              saturation and visibility to set
+	 *              Note: for temperature gamut, an object { ct, v } is
+	 *                     expected instead
+	 */
 	function setColour(hex, hsv) {
 		var	hexStr = typeof hex === 'string' ?
 					hex :
@@ -495,12 +492,12 @@ document.addEventListener('DOMContentLoaded', function () {
 		currentColour.h = hsv.h;
 		currentColour.s = hsv.s;
 		currentColour.v = hsv.v;
-		
+
 		// Send the request to the light
 		if (gamuts[gamut] === 'temperature') {
 			// For temperature gamut, the ct value needs to be sent instead
 			doStuff({
-				ct: currentColour.ct,
+				ct:  hsv.ct,
 				bri: hsv.v * 0xFF | 0
 			});
 		} else {
@@ -519,8 +516,11 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	}
 
-	// Updates currentColour to the colour of the pixel at the
-	// mouse position
+
+	/*
+	 * Update currentColour to the colour of the pixel at the
+	 * mouse position
+	 */
 	function setColourToMousePosition() {
 		// Get the pixel index from mouse x,y
 		var i = 4 * (mouse.y * W + mouse.x),
@@ -551,10 +551,7 @@ document.addEventListener('DOMContentLoaded', function () {
 				if (modes[mode] === 'colour') {
 					// Instead convert mouse position to colour temperature (range 153-500)
 					currentColour.ct = (1 - (mouse.y / H)) * 347 + 153 | 0;
-				} /*else if (modes[mode] === 'brightness') {
-					// In brightness mode, get the brightness directly (range 0-1)
-					currentColour.v = 1 - (mouse.y / H);
-				} */
+				}
 			}
 
 			// Set colour to this hex and hsv
@@ -564,7 +561,9 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 
-	// Creates the canvas, context and drawing buffer
+	/*
+	 * Create the canvas, context and drawing buffer
+	 */
 	function createDrawingContext() {
 		// Create a canvas in div#colourWheel
 		canvas = document.createElement('canvas');
@@ -584,7 +583,9 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 
-	// Draws the colour wheel at the current visibility
+	/*
+	 * Draw the colour wheel at the current visibility
+	 */
 	function drawColourWheel() {
 		var h, s, v, rgb;
 
@@ -636,10 +637,13 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	}
 
-	// Draws a circular brightness slider at the current hue and saturation
+
+	/*
+	 * Draw a circular brightness slider at the current hue and saturation
+	 */
 	function drawBrightnessSlider() {
 		var h, s, v, rgb;
-		
+
 		for (i = 0; i < buffer.data.length; i += 4) {
 			// Calculate the x,y pixel coordinates
 			x = i / 4 % W | 0;
@@ -672,16 +676,21 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	}
 
+
+	/*
+	 * Draw an approximation of the colour temperature scale
+	 * range 153-500/K
+	 */
 	function drawTemperatureScale() {
 		var i, ct, rgb;
 		for (i = 0; i < buffer.data.length; i += 4) {
 			// Calculate the x,y pixel coordinates
 			x = i / 4 % W | 0;
 			y = i / 4 / W | 0;
-			
+
 			// Convert x,y to radius from centre of the cirlce
 			r = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
-			
+
 			if (r >= radius + 2) {
 				// Outside of the circle, set to transparent
 				buffer.data[i]     = 0;
@@ -691,7 +700,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			} else {
 				// Adjust the temperature of the current based on height y
 				ct = (y / H) * 5000 + 2000;
-				
+
 				// Convert to rbg
 				rgb = ct2rgb(ct);
 
@@ -703,16 +712,20 @@ document.addEventListener('DOMContentLoaded', function () {
 			}
 		}
 	}
-	
+
+
+	/*
+	 * Draw currentImage to the canvas and updates buffer to match
+	 */
 	function drawImage() {
 		var i;
-		
+
 		// Draw the image
 		ctx.drawImage(currentImage, 0, 0, W, H);
-		
+
 		// Put the image data into the buffer
 		buffer = ctx.getImageData(0, 0, W, H);
-		
+
 		// Adjust brightness
 		/*for (i = 0; i < buffer.data.length; i += 4) {
 			buffer.data[i]     *= currentColour.v;
@@ -721,13 +734,18 @@ document.addEventListener('DOMContentLoaded', function () {
 		}*/
 	}
 
-	// Renders the buffer to the canvas
+
+	/*
+	 * Render the buffer to the canvas
+	 */
 	function renderBuffer() {
 		ctx.putImageData(buffer, 0, 0);
 	}
 
 
-	// Draws everything depending on which mode is selected
+	/*
+	 * Draw everything depending on which mode is selected
+	 */
 	function draw() {
 		switch (modes[mode]) {
 		case 'colour':
@@ -735,11 +753,11 @@ document.addEventListener('DOMContentLoaded', function () {
 			case 'hue-sat':
 				drawColourWheel();
 				break;
-					
+
 			case 'temperature':
 				drawTemperatureScale();
 				break;
-					
+
 			case 'image':
 				drawImage();
 				break;
@@ -750,25 +768,41 @@ document.addEventListener('DOMContentLoaded', function () {
 			drawBrightnessSlider();
 			break;
 		}
-		
-		//if (gamuts[gamut] !== 'image') {
-			// Image mode renders directly to the canvas.
-			// All other modes render to the buffer so still need rendering.
+
 		renderBuffer();
-		//}
 	}
 
 
-	// Changes to the next mode in the modes list
-	// and re-draws everything
+	/*
+	 * Change to the next mode in the modes list
+	 * and re-draw everything
+	 */
 	function changeMode() {
 		mode = (mode + 1) % modes.length;
 		fadeInAnimation(colourWheel, 100, draw);
 	}
 
 
+	/*
+	 * Update the mouse x,y coordinates relative to the canvas using the
+	 * current mouse/touch position
+	 */
+	function updateMousePosition(e) {
+		// On mouse move, update the mouse coordinates relative to the canvas
+		var rect = canvas.getBoundingClientRect();
+		mouse.x = (e.clientX || e.targetTouches[0].pageX) - rect.left | 0;
+		mouse.y = (e.clientY || e.targetTouches[0].pageY) - rect.top  | 0;
+	}
+
+
+	/*
+	 * Called on mousedown or touchstart
+	 * Starts an interval that updates the light to the
+	 * colour of the pixel under the mouse.
+	 */
 	function onDragStart(e) {
-		// On mousedown, immediately set the colour
+		// On mousedown, immediately update mouse position and set the colour
+		updateMousePosition(e);
 		setColourToMousePosition();
 		// Clear any existing intervals, just in case.
 		clearInterval(intervalHandle);
@@ -776,28 +810,35 @@ document.addEventListener('DOMContentLoaded', function () {
 		intervalHandle = setInterval(setColourToMousePosition, timeInterval);
 	}
 
-	
+
+	/*
+	 * On drag, update the mouse position.
+	 * The interval will update the light.
+	 */
 	function onDrag(e) {
-		// On mouse move, update the mouse coordinates relative to the canvas
-		var rect = canvas.getBoundingClientRect();
-		mouse.x = (e.clientX || e.targetTouches[0].pageX) - rect.left | 0;
-		mouse.y = (e.clientY || e.targetTouches[0].pageY) - rect.top  | 0;
+		updateMousePosition(e);
 	}
 
-	
+
+	/*
+	 * On end of drag, stop the interval from updating the light
+	 */
 	function onDragEnd(e) {
 		// On mouseup, mouseout, touchend, end drag
 		clearInterval(intervalHandle);
 	}
-	
-	
+
+
+	/*
+	 * On scroll, change the light's brightness
+	 */
 	function onScroll(e) {
 		// Get the current visibility
 		var v = currentColour.v, hex;
 
 		// Prevent default scrolling behaviour
 		e.preventDefault();
-		
+
 		// Adjust by the mouse wheel event
 		v += e.wheelDelta / 2000;
 
@@ -815,23 +856,74 @@ document.addEventListener('DOMContentLoaded', function () {
 		setColour(hex, currentColour);
 	}
 
+
+	/*
+	 * Prematurely close the connecting pane.
+	 * This allows access to other panels and other parts of the site,
+	 * however, lights will not respond to any inputs until the connection
+	 * is made.
+	 */
 	function skipConnecting() {
 		connectingSplashscreen.style.display = 'none';
 		window.alert('Please note: Hue lights may not respond.');
 	}
-	
+
+
+	/*
+	 * Update which button in the carousel is shown as currently selected
+	 */
+	function moveCarouselSelectionTo(element) {
+		/*var children = element.parentElement.getElementsByClassName('material-icons'),
+			index = [].indexOf.call(children, element);
+		carouselSelection.style.left = index * (100 / children.length + 0.5) + '%';*/
+		var siblings = element.parentElement.children,
+			i;
+		// Remove .selected class from all elements
+		for (i = 0; i < siblings.length; i += 1) {
+			siblings[i].classList.remove('selected');
+		}
+		element.classList.add('selected');
+	}
+
+
+	/*
+	 * Change the gamut to another one and redraw
+	 */
+	function changeGamut(button, gamutIndex) {
+		moveCarouselSelectionTo(button);
+		gamut = gamutIndex;
+		mode = 0;
+
+		if (gamutIndex !== 2) {
+			hideImageGallery();
+		}
+
+		draw();
+	}
+
+
+	/*
+	 * Hide the image gallery pane
+	 */
 	function hideImageGallery() {
 		if (imageGallery && !imageGallery.classList.contains('hidden')) {
 			imageGallery.classList.add('hidden');
 		}
 	}
-	
+
+
+	/*
+	 * Shopw the image gallery pane
+	 */
 	function showImageGallery() {
 		if (imageGallery && imageGallery.classList.contains('hidden')) {
 			imageGallery.classList.remove('hidden');
 		}
 	}
-	
+
+
+	/*** Attach event listeners ***/
+
 	// Attach a function to the on/off button
 	if (toggleInput) {
 		toggleInput.addEventListener('click', toggle);
@@ -857,7 +949,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			draw();
 		});
 	}
-	
+
 	// Create a colour wheel to select from
 	if (colourWheel) {
 
@@ -868,7 +960,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		getStuff(function (res) {
 			var rgb, hex;
-			
+
 			// Received a response, so connected to Hue Bridge
 			if (connectingSplashscreen) {
 				connectingSplashscreen.style.display = 'none';
@@ -904,7 +996,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			connectingSplashscreen.innerHTML = '<span>An error occurred getting data from the Hue Bridge:</span><br>' + err.description + '<br>';
 			connectingSplashscreen.appendChild(connectingSkip);
 		});
-		
+
 		// Attach mouse and touch events to the canvas.
 		canvas.addEventListener('mousedown',       onDragStart, false);
 		canvas.addEventListener('mousemove',       onDrag,      false);
@@ -916,72 +1008,48 @@ document.addEventListener('DOMContentLoaded', function () {
 		canvas.addEventListener('mousewheel',      onScroll,    false);
 		canvas.addEventListener('dblclick',        changeMode,  false);
 	}
-	
-	function moveCarouselSelectionTo(element) {
-		/*var children = element.parentElement.getElementsByClassName('material-icons'),
-			index = [].indexOf.call(children, element);
-		carouselSelection.style.left = index * (100 / children.length + 0.5) + '%';*/
-		var siblings = element.parentElement.children,
-			i;
-		// Remove .selected class from all elements
-		for (i = 0; i < siblings.length; i += 1) {
-			siblings[i].classList.remove('selected');
-		}
-		element.classList.add('selected');
-	}
-	
-	function changeGamut(button, gamutIndex) {
-		moveCarouselSelectionTo(button);
-		gamut = gamutIndex;
-		mode = 0;
-		
-		if (gamutIndex !== 2) {
-			hideImageGallery();
-		}
-		
-		draw();
-	}
-	
+
+
 	if (carouselButtons.wheel) {
 		carouselButtons.wheel.addEventListener('click', function (e) {
 			changeGamut(e.target, 0);
 		}, false);
 	}
-	
+
 	if (carouselButtons.ct) {
 		carouselButtons.ct.addEventListener('click', function (e) {
 			changeGamut(e.target, 1);
 		}, false);
 	}
-	
+
 	if (carouselButtons.image) {
 		carouselButtons.image.addEventListener('click', function (e) {
 			showImageGallery();
 			changeGamut(e.target, 2);
 		}, false);
-		
+
 		if (imageGalleryCloseButton) {
 			imageGalleryCloseButton.addEventListener('click', function (e) {
 				hideImageGallery();
 			});
 		}
-		
+
 		if (canvas && imageGallery) {
 			// Hide the image gallery when interacting with the colourwheel
 			canvas.addEventListener('mousedown',  hideImageGallery, false);
 			canvas.addEventListener('touchstart', hideImageGallery, false);
 		}
 	}
-	
+
 	if (addImageButton) {
 		addImageButton.addEventListener('click', function (e) {
 			currentImage = new Image();
-			
+
 			currentImage.onload = function () {
 				// Add the image to the gallery
 				if (imageGallery && imageGallery.children[0]) {
 					imageGallery.children[0].appendChild(currentImage);
-					
+
 					// Clicking the image draws it
 					currentImage.addEventListener('click', function (e) {
 						currentImage = e.target;
@@ -989,11 +1057,11 @@ document.addEventListener('DOMContentLoaded', function () {
 						draw();
 					}, false);
 				}
-				
+
 				// Change gamut and redraw
 				changeGamut(e.target, 2);
 			};
-			
+
 			// Load custom image
 			if (imageInput === undefined) {
 				imageInput = document.createElement('input');
@@ -1004,24 +1072,24 @@ document.addEventListener('DOMContentLoaded', function () {
 					currentImage.src = window.URL.createObjectURL(e.path[0].files[0]);
 				};
 			}
-			
+
 			imageInput.click();
-			
+
 		}, false);
 	}
-	
+
 	if (carouselButtons.gamut) {
 		carouselButtons.gamut.addEventListener('click', function (e) {
 			changeGamut(e.target, 3);
 		}, false);
 	}
-	
+
 	if (carouselButtons.loop) {
 		carouselButtons.loop.addEventListener('click', function (e) {
 			changeGamut(e.target, 4);
 		}, false);
 	}
-	
+
 	if (connectingSkip) {
 		connectingSkip.addEventListener('click', skipConnecting, false);
 	}
@@ -1059,7 +1127,12 @@ document.addEventListener('DOMContentLoaded', function () {
 			},
 			on: true
 		};
-	
+
+
+	/*
+	 * Handler for when the param dropdown changes.
+	 * Displays the correct value input type.
+	 */
 	function paramChange(e) {
 		var row = e.target.parentElement.parentElement,
 			valTd = row.getElementsByClassName('val-td')[0],
@@ -1070,7 +1143,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		for (i = 0; i < valInputs.length; i += 1) {
 			valInputs[i].style.display = 'none';
 		}
-		
+
 		// Then show the correct one
 		switch (e.target.value) {
 		case 'Colour':
@@ -1092,18 +1165,34 @@ document.addEventListener('DOMContentLoaded', function () {
 			break;
 		}
 	}
-	
+
+
+	/*
+	 * Delete the clicked on row
+	 */
 	function deleteRow(e) {
 		var row = e.target.parentElement.parentElement;
 		row.parentElement.removeChild(row);
 	}
-	
+
+
+	/*
+	 * Sets the frame indicator symbol to on or off depending on whether the
+	 * light is on or off
+	 */
 	function setFrameIndicatorSymbol() {
 		frameIndicator.innerHTML = currentColour.on ? 'play_arrow' : 'clear';
 	}
-	
+
+
+	/*
+	 * Run one row of the animation table
+	 * @param index - the index of the row to run
+	 *                Note: index 0 is the headings row and should not be run
+	 *                      index 1 is the 1st row that can be run
+	 */
 	function runAnimation(index) {
-		if (index < animTable.rows.length - 1) {
+		if (index > 0 && index < animTable.rows.length - 1) {
 			// Get the row at the index
 			var row = animTable.rows[index],
 				param = row.cells[0].getElementsByClassName('param')[0].value,
@@ -1172,12 +1261,12 @@ document.addEventListener('DOMContentLoaded', function () {
 					break;
 				}
 			}
-			
+
 			// Move the frame indicator arrow
 			frameIndicator.style.top = (1.23 * index - 0.28) + 'em';
 			currentColour.hex = hsv2hex(currentColour.hsv);
 			frameIndicator.style.color = currentColour.hex;
-			
+
 			// Only run the next animation frame if the flag is true
 			if (animPlayFlag) {
 				// Run the next animation after a timeout
@@ -1185,7 +1274,7 @@ document.addEventListener('DOMContentLoaded', function () {
 					runAnimation(index + 1);
 				}, time);
 			}
-			
+
 		} else {
 			// We have reached the row where the loop button is
 			if (loop.classList.contains('checked')) {
@@ -1193,16 +1282,20 @@ document.addEventListener('DOMContentLoaded', function () {
 				runAnimation(1);
 			}
 		}
-			
+
 	}
-	
-	function playAnimation() {
+
+
+	/*
+	 * Start playing animations, starting from row 1 of the animation table
+	 */
+	function startAnimation() {
 		// Clear any pre-existing animations, just in case
 		clearTimeout(animTimeoutHandle);
-		
+
 		// Reset play flag to true
 		animPlayFlag = true;
-		
+
 		// Ensure current colour is up to date
 		getStuff(function (res) {
 			currentColour = {
@@ -1213,7 +1306,7 @@ document.addEventListener('DOMContentLoaded', function () {
 				},
 				on: res.on
 			};
-			
+
 			setFrameIndicatorSymbol();
 
 			// Start animations from the top
@@ -1221,61 +1314,70 @@ document.addEventListener('DOMContentLoaded', function () {
 		}, function (err) {
 			// An error occurred so lights may not respond
 			window.alert('An error occurred when getting data from the Hue Bridge:\n' + err.description);
-			
+
 			// Play animations anyway but with current colour set to off
 			currentColour.on = false;
 			setFrameIndicatorSymbol();
 			runAnimation(1);
 		});
-		
-		
+
+
 		// Hide play button and show stop button
 		animPlayButton.classList.add('hidden');
 		animStopButton.classList.remove('hidden');
 	}
-	
+
+
+	/*
+	 * Stop playing animations
+	 */
 	function stopAnimation() {
 		// Raise stop flag
 		animPlayFlag = false;
-		
+
 		// Stop the currently running animation
 		clearTimeout(animTimeoutHandle);
-		
+
 		// Show play button and hide stop button
 		animPlayButton.classList.remove('hidden');
 		animStopButton.classList.add('hidden');
 	}
-	
+
+
+	/*
+	 * Add an animation frame row to the table
+	 * The last animation frame is cloned and inserted
+	 */
 	function addFrame() {
 		// Duplicate the penultimate row in the table
 		var index = animTable.rows.length - 2,
 			oldRow = animTable.rows[index],
 			newRow = oldRow.cloneNode(true),
 			lastRow = animTable.rows[index + 1];
-		
+
 		// Add event listeners
 		newRow.getElementsByClassName('delete-row')[0]
 			.addEventListener('click', deleteRow, false);
 		newRow.getElementsByClassName('param')[0]
 			.addEventListener('change', paramChange);
-		
+
 		// Match parameter select
 		newRow.getElementsByClassName('param')[0].value =
 			oldRow.getElementsByClassName('param')[0].value;
-		
+
 		// Insert into table
 		animTbody.insertBefore(newRow, lastRow);
 	}
-	
+
 	function showAnimationPane() {
 		anim.style.display = 'block';
 	}
-	
+
 	function closeAnimationPane() {
 		anim.style.display = 'none';
 		stopAnimation();
 	}
-	
+
 	function toggleAnimationPane() {
 		if (anim.style.display === 'block') {
 			closeAnimationPane();
@@ -1283,8 +1385,10 @@ document.addEventListener('DOMContentLoaded', function () {
 			showAnimationPane();
 		}
 	}
-	
-	// Toggle the clicked element between having .checked class or not
+
+	/*
+	 * Toggle the clicked element between having .checked class or not
+	 */
 	function toggleChecked(e) {
 		if (e.target.classList.contains('checked')) {
 			e.target.classList.remove('checked');
@@ -1292,27 +1396,21 @@ document.addEventListener('DOMContentLoaded', function () {
 			e.target.classList.add('checked');
 		}
 	}
-	
+
+
+	/*** Add event listeners ***/
+
 	// Add click event listeners to all toggle buttons
 	for (i = 0; i < toggles.length; i += 1) {
 		toggles[i].addEventListener('click', toggleChecked, false);
 	}
-	
+
 	// Add event listeners to all other buttons
 	paramSelect.addEventListener('change', paramChange, false);
 	deleteRowButton.addEventListener('click', deleteRow, false);
 	toggleAnimButton.addEventListener('click', toggleAnimationPane, false);
 	animCloseButton.addEventListener('click', closeAnimationPane, false);
 	addFrameButton.addEventListener('click', addFrame, false);
-	animPlayButton.addEventListener('click', playAnimation, false);
+	animPlayButton.addEventListener('click', startAnimation, false);
 	animStopButton.addEventListener('click', stopAnimation, false);
 });
-
-
-// Test refresh rates
-/*var isOn = false;
-setInterval(function () {
-	'use strict';
-	isOn = !isOn;
-	doStuff({ on: isOn });
-}, 100);*/
