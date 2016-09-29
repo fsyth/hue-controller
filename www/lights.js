@@ -443,6 +443,10 @@ document.addEventListener('DOMContentLoaded', function () {
 			gamut: document.getElementById('carousel-gamut'),
 			loop: document.getElementById('carousel-colour-loop')
 		},
+		imageGallery = document.getElementById('image-gallery'),
+		addImageButton = document.getElementById('add-image'),
+		imageGalleryCloseButton = imageGallery.getElementsByClassName('close')[0],
+		imageInput,
 		connectingSplashscreen = document.getElementById('connecting'),
 		connectingSkip = document.getElementById('connecting-skip'),
 		canvas,
@@ -468,7 +472,8 @@ document.addEventListener('DOMContentLoaded', function () {
 			r: 0xFF,
 			g: 0xFF,
 			b: 0xFF,
-			a: 0xFF
+			a: 0xFF,
+			ct: 500
 		},
 		mouse = {
 			x: 0,
@@ -476,7 +481,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		},
 		intervalHandle,
 		timeInterval = 100,
-		userImage = new Image();
+		currentImage = new Image();
 
 
 	// Set the colour to the current colour
@@ -490,16 +495,16 @@ document.addEventListener('DOMContentLoaded', function () {
 		currentColour.h = hsv.h;
 		currentColour.s = hsv.s;
 		currentColour.v = hsv.v;
-
-		if (gamuts[gamut] === 'temperature' && modes[mode] === 'colour') {
-			// Special case for temperature, instead set ct directly
-			// instead of hsv
+		
+		// Send the request to the light
+		if (gamuts[gamut] === 'temperature') {
+			// For temperature gamut, the ct value needs to be sent instead
 			doStuff({
-				ct: (1 - (mouse.y / H)) * 347 + 153 | 0,
-				bri: currentColour.v * 0xFF | 0
+				ct: currentColour.ct,
+				bri: hsv.v * 0xFF | 0
 			});
 		} else {
-			// Send the request to the light
+			// Otherwise just send the hsv values off
 			doStuff({
 				hue: hsv.h * 0xFFFF | 0,
 				sat: hsv.s * 0xFF   | 0,
@@ -541,9 +546,21 @@ document.addEventListener('DOMContentLoaded', function () {
 			// Convert to hex number
 			hex = (currentColour.r << 16) + (currentColour.g << 8) + currentColour.b;
 
+			if (gamuts[gamut] === 'temperature') {
+				// Temperature mode does not send the pixel colour directly.
+				if (modes[mode] === 'colour') {
+					// Instead convert mouse position to colour temperature (range 153-500)
+					currentColour.ct = (1 - (mouse.y / H)) * 347 + 153 | 0;
+				} /*else if (modes[mode] === 'brightness') {
+					// In brightness mode, get the brightness directly (range 0-1)
+					currentColour.v = 1 - (mouse.y / H);
+				} */
+			}
+
 			// Set colour to this hex and hsv
 			setColour(hex, currentColour);
 		}
+
 	}
 
 
@@ -622,6 +639,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	// Draws a circular brightness slider at the current hue and saturation
 	function drawBrightnessSlider() {
 		var h, s, v, rgb;
+		
 		for (i = 0; i < buffer.data.length; i += 4) {
 			// Calculate the x,y pixel coordinates
 			x = i / 4 % W | 0;
@@ -690,7 +708,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		var i;
 		
 		// Draw the image
-		ctx.drawImage(userImage, 0, 0, W, H);
+		ctx.drawImage(currentImage, 0, 0, W, H);
 		
 		// Put the image data into the buffer
 		buffer = ctx.getImageData(0, 0, W, H);
@@ -802,6 +820,18 @@ document.addEventListener('DOMContentLoaded', function () {
 		window.alert('Please note: Hue lights may not respond.');
 	}
 	
+	function hideImageGallery() {
+		if (imageGallery && !imageGallery.classList.contains('hidden')) {
+			imageGallery.classList.add('hidden');
+		}
+	}
+	
+	function showImageGallery() {
+		if (imageGallery && imageGallery.classList.contains('hidden')) {
+			imageGallery.classList.remove('hidden');
+		}
+	}
+	
 	// Attach a function to the on/off button
 	if (toggleInput) {
 		toggleInput.addEventListener('click', toggle);
@@ -903,6 +933,12 @@ document.addEventListener('DOMContentLoaded', function () {
 	function changeGamut(button, gamutIndex) {
 		moveCarouselSelectionTo(button);
 		gamut = gamutIndex;
+		mode = 0;
+		
+		if (gamutIndex !== 2) {
+			hideImageGallery();
+		}
+		
 		draw();
 	}
 	
@@ -920,18 +956,54 @@ document.addEventListener('DOMContentLoaded', function () {
 	
 	if (carouselButtons.image) {
 		carouselButtons.image.addEventListener('click', function (e) {
-			userImage.onload = function () {
+			showImageGallery();
+			changeGamut(e.target, 2);
+		}, false);
+		
+		if (imageGalleryCloseButton) {
+			imageGalleryCloseButton.addEventListener('click', function (e) {
+				hideImageGallery();
+			});
+		}
+		
+		if (canvas && imageGallery) {
+			// Hide the image gallery when interacting with the colourwheel
+			canvas.addEventListener('mousedown',  hideImageGallery, false);
+			canvas.addEventListener('touchstart', hideImageGallery, false);
+		}
+	}
+	
+	if (addImageButton) {
+		addImageButton.addEventListener('click', function (e) {
+			currentImage = new Image();
+			
+			currentImage.onload = function () {
+				// Add the image to the gallery
+				if (imageGallery && imageGallery.children[0]) {
+					imageGallery.children[0].appendChild(currentImage);
+					
+					// Clicking the image draws it
+					currentImage.addEventListener('click', function (e) {
+						currentImage = e.target;
+						mode = 0;
+						draw();
+					}, false);
+				}
+				
+				// Change gamut and redraw
 				changeGamut(e.target, 2);
 			};
 			
 			// Load custom image
-			var imageInput = document.createElement('input');
-			imageInput.setAttribute('type', 'file');
-			imageInput.setAttribute('accept', 'image');
-			
-			imageInput.onchange = function (e) {
-				userImage.src = window.URL.createObjectURL(e.path[0].files[0]);
-			};
+			if (imageInput === undefined) {
+				imageInput = document.createElement('input');
+				imageInput.setAttribute('type', 'file');
+				imageInput.setAttribute('accept', 'image');
+
+				imageInput.onchange = function (e) {
+					currentImage.src = window.URL.createObjectURL(e.path[0].files[0]);
+				};
+			}
 			
 			imageInput.click();
 			
