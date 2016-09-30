@@ -6,14 +6,15 @@
    Hue Parameters
  *********************/
 
-var hue = {
+var hue = {};
+/*var hue = {
 	ip: '192.168.1.185',
 	userId: 'qRZ0f2agZeihyCWSBBpWPRUpRg03n9VuXTcRHtHq',
 	lightNo: 2
 };
 
 hue.getUrl = 'http://' + hue.ip + '/api/' + hue.userId + '/lights/' + hue.lightNo;
-hue.putUrl = hue.getUrl + '/state';
+hue.putUrl = hue.getUrl + '/state';*/
 
 
 /**************************
@@ -417,7 +418,7 @@ function fadeInAnimation(el, time, callback) {
 /*
  * On page load, draw colour wheel and attach mouse/touch/click events
  */
-document.addEventListener('DOMContentLoaded', function () {
+function initialiseColourWheel() {
 	'use strict';
 	var toggleInput = document.getElementById('toggle'),
 		colourInput = document.getElementById('colour'),
@@ -437,8 +438,6 @@ document.addEventListener('DOMContentLoaded', function () {
 		addImageButton = document.getElementById('add-image'),
 		imageGalleryCloseButton = imageGallery.getElementsByClassName('close')[0],
 		imageInput,
-		connectingSplashscreen = document.getElementById('connecting'),
-		connectingSkip = document.getElementById('connecting-skip'),
 		canvas,
 		ctx,
 		buffer,
@@ -857,16 +856,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 
-	/*
-	 * Prematurely close the connecting pane.
-	 * This allows access to other panels and other parts of the site,
-	 * however, lights will not respond to any inputs until the connection
-	 * is made.
-	 */
-	function skipConnecting() {
-		connectingSplashscreen.style.display = 'none';
-		window.alert('Please note: Hue lights may not respond.');
-	}
+	
 
 
 	/*
@@ -883,22 +873,6 @@ document.addEventListener('DOMContentLoaded', function () {
 			siblings[i].classList.remove('selected');
 		}
 		element.classList.add('selected');
-	}
-
-
-	/*
-	 * Change the gamut to another one and redraw
-	 */
-	function changeGamut(button, gamutIndex) {
-		moveCarouselSelectionTo(button);
-		gamut = gamutIndex;
-		mode = 0;
-
-		if (gamutIndex !== 2) {
-			hideImageGallery();
-		}
-
-		draw();
 	}
 
 
@@ -921,6 +895,74 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	}
 
+
+	/*
+	 * Change the gamut to another one and redraw
+	 */
+	function changeGamut(button, gamutIndex) {
+		moveCarouselSelectionTo(button);
+		gamut = gamutIndex;
+		mode = 0;
+
+		if (gamutIndex !== 2) {
+			hideImageGallery();
+		}
+
+		draw();
+	}
+
+	
+	/*
+	 * Redraw the colour wheel for the now updated currentColour
+	 * once the connection has been established
+	 * @param e - the CustomEvent object containing detail of
+	 *            the xhr response object from the hue bridge
+	 *            containing the light's states
+	 *            hue, sat, bri, on, ct, etc...
+	 */
+	function onHueConnection(e) {
+		var rgb, hex,
+			res = e.detail;
+
+		
+
+		// Update currentColour to the lights current state
+		// Set brightness to alteast 2% so colour wheel is visible.
+		currentColour.h = res.hue / 0xFFFF;
+		currentColour.s = res.sat / 0xFF;
+		currentColour.v = Math.max(res.bri / 0xFF, 0.02);
+
+		// Convert to rgb to update the rest of current Colour
+		rgb = hsv2rgb(currentColour);
+
+		currentColour.r = rgb.r;
+		currentColour.g = rgb.g;
+		currentColour.b = rgb.b;
+
+		// Convert to hex to init HTML elements
+		hex = rgb2hex(rgb);
+
+		// Initialise background
+		document.body.style.backgroundColor = hex;
+		if (colourInput) {
+			colourInput.value = hex;
+		}
+
+		// Then draw the colour wheel or the brightness slider
+		// now that current colour has been updated.
+		draw();
+	}
+	
+	
+	/*
+	 * @param e - the CustomEvent object containing detail of
+	 *            the xhr response object from the hue bridge
+	 *            containing the error description
+	 */
+	function onHueError(e) {
+		
+	}
+	
 
 	/*** Attach event listeners ***/
 
@@ -958,44 +1000,9 @@ document.addEventListener('DOMContentLoaded', function () {
 		createDrawingContext();
 		draw();
 
-		getStuff(function (res) {
-			var rgb, hex;
-
-			// Received a response, so connected to Hue Bridge
-			if (connectingSplashscreen) {
-				connectingSplashscreen.style.display = 'none';
-			}
-
-			// Update currentColour to the lights current state
-			// Set brightness to alteast 2% so colour wheel is visible.
-			currentColour.h = res.hue / 0xFFFF;
-			currentColour.s = res.sat / 0xFF;
-			currentColour.v = Math.max(res.bri / 0xFF, 0.02);
-
-			// Convert to rgb to update the rest of current Colour
-			rgb = hsv2rgb(currentColour);
-
-			currentColour.r = rgb.r;
-			currentColour.g = rgb.g;
-			currentColour.b = rgb.b;
-
-			// Convert to hex to init HTML elements
-			hex = rgb2hex(rgb);
-
-			// Initialise background
-			document.body.style.backgroundColor = hex;
-			if (colourInput) {
-				colourInput.value = hex;
-			}
-
-			// Then draw the colour wheel or the brightness slider
-			// now that current colour has been updated.
-			draw();
-		}, function (err) {
-			// Error occurred
-			connectingSplashscreen.innerHTML = '<span>An error occurred getting data from the Hue Bridge:</span><br>' + err.description + '<br>';
-			connectingSplashscreen.appendChild(connectingSkip);
-		});
+		// Redraw once connected
+		document.addEventListener('hueconnection', onHueConnection, false);
+		document.addEventListener('hueerror',      onHueError,  false);
 
 		// Attach mouse and touch events to the canvas.
 		canvas.addEventListener('mousedown',       onDragStart, false);
@@ -1089,18 +1096,14 @@ document.addEventListener('DOMContentLoaded', function () {
 			changeGamut(e.target, 4);
 		}, false);
 	}
-
-	if (connectingSkip) {
-		connectingSkip.addEventListener('click', skipConnecting, false);
-	}
-});
+}
 
 
 /*********************
    Animations demo
  *********************/
 
-document.addEventListener('DOMContentLoaded', function () {
+function initialiseAnimationsPane() {
 	'use strict';
 	var anim = document.getElementById('anim'),
 		animTable = document.getElementById('anim-table'),
@@ -1413,4 +1416,85 @@ document.addEventListener('DOMContentLoaded', function () {
 	addFrameButton.addEventListener('click', addFrame, false);
 	animPlayButton.addEventListener('click', startAnimation, false);
 	animStopButton.addEventListener('click', stopAnimation, false);
+}
+
+
+/*********************
+   Connect with Hue Bridge and Initialise
+ *********************/
+
+document.addEventListener('DOMContentLoaded', function () {
+	'use strict';
+	var connectingSplashscreen = document.getElementById('connecting'),
+		connectingSkip = document.getElementById('connecting-skip'),
+		storage = window.localStorage;
+	
+	/*
+	 * Prematurely close the connecting pane.
+	 * This allows access to other panels and other parts of the site,
+	 * however, lights will not respond to any inputs until the connection
+	 * is made.
+	 */
+	function skipConnecting() {
+		if (connectingSplashscreen) {
+			connectingSplashscreen.style.display = 'none';
+		}
+		window.alert('Please note: Hue lights will not respond until the connection is made.\nWill continue trying to connect in the background.');
+	}
+	
+	// Attach a click handler that allows the connecting splashscreen to be
+	// hidden early.
+	if (connectingSkip) {
+		connectingSkip.addEventListener('click', skipConnecting, false);
+	}
+	
+	document.addEventListener('hueconnection', function (e) {
+		if (connectingSplashscreen) {
+			connectingSplashscreen.style.display = 'none';
+		}
+	});
+	
+	document.addEventListener('hueerror', function (e) {
+		var err = e.detail;
+		// Error occurred
+		connectingSplashscreen.innerHTML = '<span>An error occurred getting data from the Hue Bridge:</span><br>' + err.description + '<br>';
+		connectingSplashscreen.appendChild(connectingSkip);
+	});
+	
+	
+	initialiseColourWheel();
+	initialiseAnimationsPane();
+	
+	// Check for existing hue parameters
+	if (storage.hue) {
+		hue = JSON.parse(storage.hue);
+	} else {
+		// If none are found, create a newdeveloper
+		// TODO: Request these params instead of hard coded strings
+		hue.ip = '192.168.1.185';
+		hue.userId = 'qRZ0f2agZeihyCWSBBpWPRUpRg03n9VuXTcRHtHq';
+		hue.lightNo = '2';
+		
+		// Assemble URLs
+		hue.getUrl = 'http://' + hue.ip + '/api/' + hue.userId + '/lights/' + hue.lightNo;
+		hue.putUrl = hue.getUrl + '/state';
+		
+		//storage.hue = JSON.stringify(hue);
+	}
+		
+	// Connect to the hue bridge
+	
+	// Received a response, so connected to Hue Bridge	
+	
+	
+	// Dispatch connected event to provide the light's current colour
+	getStuff(function (res) {
+		document.dispatchEvent(new window.CustomEvent('hueconnection', {
+			detail: res
+		}));
+	}, function (err) {
+		document.dispatchEvent(new window.CustomEvent('hueerror', {
+			detail: err
+		}));
+	});
 });
