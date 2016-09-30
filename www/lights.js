@@ -93,6 +93,99 @@ function getStuff(responseHandler, errorHandler) {
 }
 
 
+/*
+ * This function sends an XMLHttpRequest to the meethue nupnp broker
+ * @param responseHandler - a callback function whose first argument
+ *                          contains the response - an array of objects
+ *                          { id, internalipaddress }
+ *
+ * Note: The callback is called asynchronously once the
+ * XMLHttpRequest responds.
+ */
+function getBridgeIp(responseHandler, errorHandler) {
+	'use strict';
+	var xhr = new XMLHttpRequest();
+	
+	xhr.onreadystatechange = function () {
+		// If complete and succesful
+		if (this.readyState === 4 && this.status === 200) {
+			var res = JSON.parse(this.responseText);
+			if (typeof responseHandler === 'function') {
+				// Call the response handler and pass in
+				// { id, internalipaddress }
+				responseHandler(res);
+			}
+		}
+	};
+	
+	xhr.onerror = function () {
+		// Unsuccessful xhr
+		if (typeof errorHandler === 'function') {
+			errorHandler(this.statusText);
+		}
+	};
+	
+	// Send the request to the broker
+	xhr.open('GET', 'https://www.meethue.com/api/nupnp');
+	xhr.send();
+}
+
+
+/*
+ * Create a new developer login url.
+ * The first post will respond with an error description
+ * telling the user to press the link button on the hue bridge.
+ * The second post should respond with the newdevloper username.
+ */
+function createNewDeveloper(pressLinkButtonHandler, successHandler, errorHandler) {
+	'use strict';
+	var xhr = new XMLHttpRequest();
+	
+	function sendStuff() {
+		xhr.open('POST', 'http://' + hue.ip + '/api');
+		xhr.send(JSON.stringify({
+			devicetype: "hue-controller#node"
+		}));
+		//console.log('requesting new user id');
+	}
+	
+	xhr.onreadystatechange = function () {
+		// If complete and succesful
+		if (this.readyState === 4 && this.status === 200) {
+			//console.log('response received');
+			var res = JSON.parse(this.responseText);
+			
+			if (res[0] && res[0].error && res[0].error.type === 101) {
+				// Link button needs to be pressed
+				// Prompt user in the handler
+				if (typeof pressLinkButtonHandler === 'function') {
+					pressLinkButtonHandler(res[0].error);
+				}
+				
+				// Try posting again until it is succesful
+				setTimeout(sendStuff, 1000);
+			} else if (res[0] && res[0].success) {
+				// Link button was pressed
+				if (typeof successHandler === 'function') {
+					// Call the response handler and pass in
+					// { username }
+					successHandler(res[0].success);
+				}
+			}
+		}
+	};
+	
+	xhr.onerror = function () {
+		// Unsuccessful xhr
+		if (typeof errorHandler === 'function') {
+			errorHandler(this.statusText);
+		}
+	};
+	
+	sendStuff();
+}
+
+
 /*********************
    Colour Conversions
  *********************/
@@ -607,10 +700,6 @@ function initialiseColourWheel() {
 			} else {
 				// Calculate the angle from the circle centre to the pixel
 				t = Math.atan2(y - radius, x - radius);
-				// Need to distinguish between +x/+y and -x/-y
-				/*if (x < radius) {
-					t += Math.PI;
-				}*/
 
 				// Scale angle to range 0-1 to give hue
 				h = t / (2 * Math.PI);
@@ -856,16 +945,10 @@ function initialiseColourWheel() {
 	}
 
 
-	
-
-
 	/*
 	 * Update which button in the carousel is shown as currently selected
 	 */
 	function moveCarouselSelectionTo(element) {
-		/*var children = element.parentElement.getElementsByClassName('material-icons'),
-			index = [].indexOf.call(children, element);
-		carouselSelection.style.left = index * (100 / children.length + 0.5) + '%';*/
 		var siblings = element.parentElement.children,
 			i;
 		// Remove .selected class from all elements
@@ -923,8 +1006,6 @@ function initialiseColourWheel() {
 	function onHueConnection(e) {
 		var rgb, hex,
 			res = e.detail;
-
-		
 
 		// Update currentColour to the lights current state
 		// Set brightness to alteast 2% so colour wheel is visible.
@@ -1103,6 +1184,11 @@ function initialiseColourWheel() {
    Animations demo
  *********************/
 
+/*
+ * Initialise the animations pane.
+ * Here, a sequence of values to be sent to the Hue light
+ * can be queued up in a table.
+ */
 function initialiseAnimationsPane() {
 	'use strict';
 	var anim = document.getElementById('anim'),
@@ -1324,7 +1410,6 @@ function initialiseAnimationsPane() {
 			runAnimation(1);
 		});
 
-
 		// Hide play button and show stop button
 		animPlayButton.classList.add('hidden');
 		animStopButton.classList.remove('hidden');
@@ -1419,15 +1504,23 @@ function initialiseAnimationsPane() {
 }
 
 
-/*********************
-   Connect with Hue Bridge and Initialise
- *********************/
+/***************************
+   Connecting splashscreen
+ ***************************/
 
-document.addEventListener('DOMContentLoaded', function () {
+/*
+ * Initialise the splashscreen that shows that connection is being made.
+ * The splash screen will indicate that the connection is still being made.
+ * It can be closed early, though the lights will not respond until the
+ * connection is established.
+ * The splashscrren will also display any error messages that occur when
+ * trying to connect.
+ */
+function initialiseConnectingSplashscreen() {
 	'use strict';
 	var connectingSplashscreen = document.getElementById('connecting'),
-		connectingSkip = document.getElementById('connecting-skip'),
-		storage = window.localStorage;
+		connectingMessage = document.getElementById('connecting-message'),
+		connectingSkip = document.getElementById('connecting-skip');
 	
 	/*
 	 * Prematurely close the connecting pane.
@@ -1448,12 +1541,14 @@ document.addEventListener('DOMContentLoaded', function () {
 		connectingSkip.addEventListener('click', skipConnecting, false);
 	}
 	
+	// Once connected, hide the splashscreen
 	document.addEventListener('hueconnection', function (e) {
 		if (connectingSplashscreen) {
 			connectingSplashscreen.style.display = 'none';
 		}
 	});
 	
+	// If an error occurs, display the error message in the splashscreen
 	document.addEventListener('hueerror', function (e) {
 		var err = e.detail;
 		// Error occurred
@@ -1461,40 +1556,99 @@ document.addEventListener('DOMContentLoaded', function () {
 		connectingSplashscreen.appendChild(connectingSkip);
 	});
 	
+	document.addEventListener('huelinkbutton', function (e) {
+		connectingMessage.innerHTML = 'Please press the link button on the Hue Bridge';
+	});
+}
+
+
+/******************************************
+   Connect with Hue Bridge and Initialise
+ ******************************************/
+
+function initialise() {
+	'use strict';
+	var	storage = window.localStorage;
 	
+	/*
+	 * Called once the hue parameters have been obtained,
+	 * either from storage or by finding the bridge IP and
+	 * creating a new developer
+	 */
+	function establishConnection() {
+		// Connect to the hue bridge
+
+		// Received a response, so connected to Hue Bridge	
+
+
+		// Dispatch connected event to provide the light's current colour
+		getStuff(function (res) {
+			document.dispatchEvent(new window.CustomEvent('hueconnection', {
+				detail: res
+			}));
+		}, function (err) {
+			// Connection failed in some way
+			// Hue parameters in storage could be incorrect
+			// Prompt user, clear storage, regather hue params
+			// TODO
+			
+			document.dispatchEvent(new window.CustomEvent('hueerror', {
+				detail: err
+			}));
+		});
+	}
+	
+	initialiseConnectingSplashscreen();
 	initialiseColourWheel();
 	initialiseAnimationsPane();
 	
 	// Check for existing hue parameters
 	if (storage.hue) {
 		hue = JSON.parse(storage.hue);
+		establishConnection();
 	} else {
-		// If none are found, create a newdeveloper
-		// TODO: Request these params instead of hard coded strings
-		hue.ip = '192.168.1.185';
-		hue.userId = 'qRZ0f2agZeihyCWSBBpWPRUpRg03n9VuXTcRHtHq';
-		hue.lightNo = '2';
-		
-		// Assemble URLs
-		hue.getUrl = 'http://' + hue.ip + '/api/' + hue.userId + '/lights/' + hue.lightNo;
-		hue.putUrl = hue.getUrl + '/state';
-		
-		//storage.hue = JSON.stringify(hue);
+		// If none are found, first we need to find the Hue Bridge IP
+		getBridgeIp(function (res) {
+			if (res && res[0] && res[0].internalipaddress) {
+				hue.ip = res[0].internalipaddress;
+				console.log('Hue Bridge found at IP ' + hue.ip);
+			} else {
+				console.error('Bridge IP address search failed');
+			}
+			
+			// Now need to create a newdeveloper
+			createNewDeveloper(function (linkerr) {
+				// The link button needs to be pressed.
+				// Dispatch an event so the connecting splashscreen can prompt
+				// the user.
+				document.dispatchEvent(new window.CustomEvent('huelinkbutton', {
+					detail: linkerr
+				}));
+			}, function (success) {
+				hue.userId = success.username;
+				console.log('New username created: ' + hue.userId);
+				//hue.userId = 'qRZ0f2agZeihyCWSBBpWPRUpRg03n9VuXTcRHtHq';
+				
+				// Default hue light number
+				hue.lightNo = '2';
+
+				// Assemble URLs
+				hue.getUrl = 'http://' + hue.ip + '/api/' + hue.userId + '/lights/' + hue.lightNo;
+				hue.putUrl = hue.getUrl + '/state';
+				
+				// Store the hue parameters for next time
+				storage.hue = JSON.stringify(hue);
+
+				establishConnection();
+			}, function (err) {
+				// XHR to hue bridge failed
+				console.error(err.statusText);
+			});
+		}, function (err) {
+			// XHR to meethue broker failed
+			console.error(err.statusText);
+		});
 	}
-		
-	// Connect to the hue bridge
-	
-	// Received a response, so connected to Hue Bridge	
-	
-	
-	// Dispatch connected event to provide the light's current colour
-	getStuff(function (res) {
-		document.dispatchEvent(new window.CustomEvent('hueconnection', {
-			detail: res
-		}));
-	}, function (err) {
-		document.dispatchEvent(new window.CustomEvent('hueerror', {
-			detail: err
-		}));
-	});
-});
+}
+
+document.addEventListener('DOMContentLoaded', initialise, false);
