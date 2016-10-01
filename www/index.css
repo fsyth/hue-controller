@@ -8,7 +8,7 @@ body {
 	margin: 20px;
 	padding: 0;
 	font-family: Arial, sans-serif;
-	
+
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;
 	-khtml-user-select: none;
@@ -253,7 +253,7 @@ input[type=range]:focus::-ms-fill-upper {
 }
 
 #anim tr:first-child:nth-last-child(2) .delete-row.button {
-    visibility: hidden;
+	visibility: hidden;
 }
 
 #anim td:not(:last-child) {
@@ -301,10 +301,15 @@ input[type=range]:focus::-ms-fill-upper {
 	background-color: rgba(70, 70, 70, 0.7);
 	z-index: 40;
 	bottom: 0;
-	padding: 7.5% 0;
+	padding: 0;
 	color: #FFF;
 	text-align: center;
 	cursor: default;
+}
+
+#connecting #connecting-message {
+	display: inline-block;
+	margin-top: 200px;
 }
 
 #connecting span {
@@ -314,7 +319,6 @@ input[type=range]:focus::-ms-fill-upper {
 
 #connecting .material-icons {
 	display: inline-block;
-	margin: 0 200px;
 	font-size: 700%;
 }
 
@@ -461,7 +465,7 @@ input[type=range]:focus::-ms-fill-upper {
 	-webkit-animation-duration: 0.2s;
 	-moz-animation-duration: 0.2s;
 	animation-duration: 0.2s;
-	
+
 	position: absolute;
 	z-index: -10;
 }

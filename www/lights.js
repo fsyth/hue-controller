@@ -50,7 +50,7 @@ function doStuff(settings, responseHandler, errorHandler) {
 			errorHandler(this);
 		}
 	};
-	
+
 	xhr.open('PUT', hue.putUrl, true);
 	xhr.send(typeof settings === 'string' ? settings : JSON.stringify(settings));
 }
@@ -157,7 +157,7 @@ function getAllLights(responseHandler, errorHandler) {
 function getBridgeIp(responseHandler, errorHandler) {
 	'use strict';
 	var xhr = new XMLHttpRequest();
-	
+
 	xhr.onreadystatechange = function () {
 		// If complete and succesful
 		if (this.readyState === 4 && this.status === 200) {
@@ -169,14 +169,14 @@ function getBridgeIp(responseHandler, errorHandler) {
 			}
 		}
 	};
-	
+
 	xhr.onerror = function () {
 		// Unsuccessful xhr
 		if (typeof errorHandler === 'function') {
 			errorHandler(this);
 		}
 	};
-	
+
 	// Send the request to the broker
 	xhr.open('GET', 'https://www.meethue.com/api/nupnp');
 	xhr.send();
@@ -192,7 +192,7 @@ function getBridgeIp(responseHandler, errorHandler) {
 function createNewDeveloper(pressLinkButtonHandler, successHandler, errorHandler) {
 	'use strict';
 	var xhr = new XMLHttpRequest();
-	
+
 	function sendStuff() {
 		xhr.open('POST', 'http://' + hue.ip + '/api');
 		xhr.send(JSON.stringify({
@@ -200,20 +200,20 @@ function createNewDeveloper(pressLinkButtonHandler, successHandler, errorHandler
 		}));
 		//console.log('requesting new user id');
 	}
-	
+
 	xhr.onreadystatechange = function () {
 		// If complete and succesful
 		if (this.readyState === 4 && this.status === 200) {
 			//console.log('response received');
 			var res = JSON.parse(this.responseText);
-			
+
 			if (res[0] && res[0].error && res[0].error.type === 101) {
 				// Link button needs to be pressed
 				// Prompt user in the handler
 				if (typeof pressLinkButtonHandler === 'function') {
 					pressLinkButtonHandler(res[0].error);
 				}
-				
+
 				// Try posting again until it is succesful
 				setTimeout(sendStuff, 1000);
 			} else if (res[0] && res[0].success) {
@@ -226,14 +226,14 @@ function createNewDeveloper(pressLinkButtonHandler, successHandler, errorHandler
 			}
 		}
 	};
-	
+
 	xhr.onerror = function () {
 		// Unsuccessful xhr
 		if (typeof errorHandler === 'function') {
 			errorHandler(this);
 		}
 	};
-	
+
 	sendStuff();
 }
 
@@ -296,7 +296,7 @@ function establishConnection() {
 
 function firstTimeSetup() {
 	'use strict';
-	
+
 	// If none are found, first we need to find the Hue Bridge IP
 	getBridgeIp(function (res) {
 		if (res && res[0] && res[0].internalipaddress) {
@@ -1154,7 +1154,7 @@ function initialiseColourWheel() {
 		draw();
 	}
 
-	
+
 	/*
 	 * Redraw the colour wheel for the now updated currentColour
 	 * once the connection has been established
@@ -1193,17 +1193,17 @@ function initialiseColourWheel() {
 		// now that current colour has been updated.
 		draw();
 	}
-	
-	
+
+
 	/*
 	 * @param e - the CustomEvent object containing detail of
 	 *            the xhr response object from the hue bridge
 	 *            containing the error description
 	 */
 	function onHueError(e) {
-		
+
 	}
-	
+
 
 	/*** Attach event listeners ***/
 
@@ -1673,17 +1673,66 @@ function initialiseSettingsPanel() {
 	var hueIp = document.getElementById('hue-ip'),
 		hueUsername = document.getElementById('hue-username'),
 		hueLightNo = document.getElementById('hue-light-no'),
+		hueTest = document.getElementById('hue-test'),
 		hueSave = document.getElementById('hue-save'),
-		hueClear = document.getElementById('hue-clear');
-	
-	
+		hueClear = document.getElementById('hue-clear'),
+		hueMessages = document.getElementById('hue-messages'),
+		messageTimeoutHandle;
+
+	/*
+	 * Display a message in a span in the settings page
+	 */
+	function displayMessage(str, type, timeout) {
+		// Show the message in the span
+		hueMessages.innerHTML = str;
+		hueMessages.classList.remove('fade-out');
+
+		switch (type) {
+			case 'info':
+				hueMessages.style.color = '#6FC';
+				break;
+
+			case 'error':
+				hueMessages.style.color = '#F44';
+				break;
+
+			default:
+				hueMessages.style.color = '#CCC';
+				break;
+		}
+
+		// Clear timeout handle in case several messages were
+		// displayed in succesion
+		clearTimeout(messageTimeoutHandle);
+
+		// Clear the span after a few seconds
+		messageTimeoutHandle = setTimeout(function () {
+			hueMessages.classList.add('fade-out');
+		}, timeout || 5000);
+	}
+
+	/*
+	 * Take values from the form and update the gloabl hue variable
+	 */
+	function submitForm() {
+		hue.ip = hueIp.value || '192.168.XXX.XXX';
+		hue.userId = hueUsername.value || 'abcdefghijklmnopqrstuvwxyz123456789ABCDE';
+		hue.lightNo = hueLightNo.value || 1;
+		setHueUrls();
+	}
+
+	/*
+	 * Get data from the hue bridge about all lights and
+	 * fill the light selection dropdown with room names
+	 */
 	function populateLightSelection() {
 		getAllLights(function (res) {
-			var lightNo;
-			
+			var lightNo,
+				lightNames = [];
+
 			// Clear the light number selection
 			hueLightNo.innerHTML = '';
-			
+
 			// For each light found connected to the bridge
 			for (lightNo in res) {
 				if (res.hasOwnProperty(lightNo)) {
@@ -1692,22 +1741,35 @@ function initialiseSettingsPanel() {
 						'<option value="' + lightNo + '">' +
 						res[lightNo].name +
 						'</option>';
+
+					lightNames.push(res[lightNo].name);
 				}
+			}
+
+			if (lightNames.length > 0) {
+				displayMessage('Lights found: ' + lightNames.join(', '), 'info');
+			} else {
+				displayMessage('Connected, but list of lights was empty.', 'error');
 			}
 
 			// Make sure the form elements are up to date
 			hueIp.value = hue.ip;
 			hueUsername.value = hue.userId;
 			hueLightNo.value = hue.lightNo;
+		}, function (err) {
+			// Could not find any lights
+			hueLightNo.innerHTML = '<option value="" selected>&lt;No lights found&gt;</option>';
+			// Display error in message area
+			displayMessage('The following error occurred: ' + err.description, 'error');
 		});
 	}
-	
+
 	document.addEventListener('huebridgeip', function (res) {
 		hueIp.value = res.detail.internalipaddress;
 	});
-	
+
 	document.addEventListener('hueconnection', populateLightSelection);
-	
+
 	document.addEventListener('hueerror', function (e) {
 		// Update form with parameters currently being used so it is
 		// populated even though the connection failed
@@ -1716,37 +1778,54 @@ function initialiseSettingsPanel() {
 		hueUsername.value = hue.userId;
 		//hueLightNo.value = '<No lights found>';
 	});
-	
+
 	hueIp.addEventListener('change', function () {
 		hue.ip = hueIp.value;
 		setHueUrls();
 	}, false);
-	
+
 	hueUsername.addEventListener('change', function () {
 		hue.userId = hueUsername.value;
 		setHueUrls();
 	}, false);
-	
+
 	hueLightNo.addEventListener('change', function () {
 		hue.lightNo = hueLightNo.value;
 		setHueUrls();
 	}, false);
-	
+
+	hueTest.addEventListener('click', function () {
+		// Update the gloabl hue variable with
+		// settings from the form
+		submitForm();
+
+		// Display the the search has started
+		displayMessage('Searching for lights...', 'other', 20e3);
+
+		// Search for lights
+		populateLightSelection();
+	});
+
 	hueSave.addEventListener('click', function () {
-		hue.ip = hueIp.value || '192.168.XXX.XXX';
-		hue.userId = hueUsername.value || 'abcdefghijklmnopqrstuvwxyz123456789ABCDE';
-		hue.lightNo = hueLightNo.value || 1;
-		setHueUrls();
-		
+		// Submit so that the global hue variable is up to date
+		submitForm();
+
+		// Store the global hue variable
 		storage.set({
 			hue: hue
 		});
-		
-		populateLightSelection();
+
+		// Save message
+		displayMessage('Changes saved.', 'info');
+
+		// Establish a connection with the new parameters
+		establishConnection();
 	}, false);
-	
+
 	hueClear.addEventListener('click', function () {
 		storage.clear();
+
+		displayMessage('Settings cleared.', 'info');
 	}, false);
 }
 
@@ -1768,7 +1847,7 @@ function initialiseConnectingSplashscreen() {
 	var connectingSplashscreen = document.getElementById('connecting'),
 		connectingMessage = document.getElementById('connecting-message'),
 		connectingSkip = document.getElementById('connecting-skip');
-	
+
 	/*
 	 * Prematurely close the connecting pane.
 	 * This allows access to other panels and other parts of the site,
@@ -1781,20 +1860,20 @@ function initialiseConnectingSplashscreen() {
 		}
 		window.alert('Please note: Hue lights will not respond until the connection is made.\nWill continue trying to connect in the background.');
 	}
-	
+
 	// Attach a click handler that allows the connecting splashscreen to be
 	// hidden early.
 	if (connectingSkip) {
 		connectingSkip.addEventListener('click', skipConnecting, false);
 	}
-	
+
 	// Once connected, hide the splashscreen
 	document.addEventListener('hueconnection', function (e) {
 		if (connectingSplashscreen) {
 			connectingSplashscreen.style.display = 'none';
 		}
 	});
-	
+
 	// If an error occurs, display the error message in the splashscreen
 	document.addEventListener('hueerror', function (e) {
 		var err = e.detail;
@@ -1805,7 +1884,7 @@ function initialiseConnectingSplashscreen() {
 			'<br>';
 		connectingSplashscreen.appendChild(connectingSkip);
 	});
-	
+
 	document.addEventListener('huelinkbutton', function (e) {
 		connectingMessage.innerHTML = 'Please press the link button on the Hue Bridge';
 	});
@@ -1818,7 +1897,7 @@ function initialiseConnectingSplashscreen() {
 
 function LocalDataStorage() {
 	'use strict';
-	
+
 	// Find which type of storage to use for the environment
 	try {
 		// Webpage environment
@@ -1837,7 +1916,7 @@ function LocalDataStorage() {
 			console.error('Storage unavailable');
 		}
 	}
-	
+
 	/*
 	 * @param key - optional, a string key for the data
 	 *              to be retrieved. If omitted, an object
@@ -1849,7 +1928,7 @@ function LocalDataStorage() {
 	 */
 	this.get = function (callback) {
 		var key, items;
-		
+
 		switch (this.storageType) {
 		case 'local':
 			items = {};
@@ -1859,11 +1938,11 @@ function LocalDataStorage() {
 					items[key] = JSON.parse(window.localStorage[key]);
 				}
 			}
-				
+
 			if (typeof callback === 'function') {
 				callback(items);
 			}
-			
+
 			break;
 
 		case 'chrome':
@@ -1875,7 +1954,7 @@ function LocalDataStorage() {
 			break;
 		}
 	};
-	
+
 	/*
 	 * @param obj - an object of key:value pairs to be stored
 	 * @param callback - the callback function to be run once
@@ -1883,7 +1962,7 @@ function LocalDataStorage() {
 	 */
 	this.set = function (obj, callback) {
 		var key;
-		
+
 		switch (this.storageType) {
 		case 'local':
 			for (key in obj) {
@@ -1901,7 +1980,7 @@ function LocalDataStorage() {
 			break;
 		}
 	};
-	
+
 	/*
 	 * Clears all storage
 	 */
@@ -1934,10 +2013,10 @@ function initialise() {
 	initialiseColourWheel();
 	initialiseAnimationsPane();
 	initialiseSettingsPanel();
-	
+
 	// Get local storage space
 	storage = new LocalDataStorage();
-	
+
 	// Check for existing hue parameters
 	storage.get(function (items) {
 		if (items.hue) {
