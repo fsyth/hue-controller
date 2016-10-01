@@ -1,25 +1,25 @@
-/*global console*/
+/*global console, chrome*/
 /*jslint bitwise: true*/
 
 
 /*********************
-   Hue Parameters
+   Global Objects
  *********************/
 
-var hue = {};
-/*var hue = {
-	ip: '192.168.1.185',
-	userId: 'qRZ0f2agZeihyCWSBBpWPRUpRg03n9VuXTcRHtHq',
-	lightNo: 2
-};
-
-hue.getUrl = 'http://' + hue.ip + '/api/' + hue.userId + '/lights/' + hue.lightNo;
-hue.putUrl = hue.getUrl + '/state';*/
+var storage, hue = {};
 
 
 /**************************
    XMLHttpRequest Methods
  **************************/
+
+
+function setHueUrls() {
+	'use strict';
+	// Assemble URLs and assign them to the global hue object
+	hue.getUrl = 'http://' + hue.ip + '/api/' + hue.userId + '/lights/' + hue.lightNo;
+	hue.putUrl = hue.getUrl + '/state';
+}
 
 /*
  * This function sends a data object to the hue light.
@@ -30,7 +30,7 @@ hue.putUrl = hue.getUrl + '/state';*/
  * Note: The callback is called asynchronously once the
  * XMLHttpRequest responds.
  */
-function doStuff(settings, responseHandler) {
+function doStuff(settings, responseHandler, errorHandler) {
 	'use strict';
 	var xhr = new XMLHttpRequest();
 
@@ -44,6 +44,13 @@ function doStuff(settings, responseHandler) {
 		}
 	};
 
+	xhr.onerror = function () {
+		// Unsuccessful xhr
+		if (typeof errorHandler === 'function') {
+			errorHandler(this);
+		}
+	};
+	
 	xhr.open('PUT', hue.putUrl, true);
 	xhr.send(typeof settings === 'string' ? settings : JSON.stringify(settings));
 }
@@ -84,11 +91,56 @@ function getStuff(responseHandler, errorHandler) {
 	xhr.onerror = function () {
 		// Unsuccessful xhr
 		if (typeof errorHandler === 'function') {
-			errorHandler(this.statusText);
+			errorHandler(this);
 		}
 	};
 
 	xhr.open('GET', hue.getUrl);
+	xhr.send();
+}
+
+
+/*
+ * This function gets the current data object held by all lights
+ * found connected to the Hue Bridge
+ * @param responseHandler - a callback function whose first
+ *                          argument contains the response
+ *
+ * Note: The callback is called asynchronously once the
+ * XMLHttpRequest responds.
+ */
+function getAllLights(responseHandler, errorHandler) {
+	'use strict';
+	var xhr = new XMLHttpRequest();
+
+	xhr.onreadystatechange = function () {
+		// If complete and succesful
+		if (this.readyState === 4 && this.status === 200) {
+			var res = JSON.parse(this.responseText);
+			//console.log(res.state);
+			if (res[0] && res[0].error) {
+				// An error occurred so alert it
+				console.log('An error occurred when getting data from the Hue Bridge:\n' +
+							res[0].error.description);
+
+				if (typeof errorHandler === 'function') {
+					errorHandler(res[0].error);
+				}
+			} else if (typeof responseHandler === 'function') {
+				// Call the response handler and pass in the state object
+				responseHandler(res);
+			}
+		}
+	};
+
+	xhr.onerror = function () {
+		// Unsuccessful xhr
+		if (typeof errorHandler === 'function') {
+			errorHandler(this);
+		}
+	};
+
+	xhr.open('GET', hue.getUrl.replace(/\/\d+$/, ''));
 	xhr.send();
 }
 
@@ -121,7 +173,7 @@ function getBridgeIp(responseHandler, errorHandler) {
 	xhr.onerror = function () {
 		// Unsuccessful xhr
 		if (typeof errorHandler === 'function') {
-			errorHandler(this.statusText);
+			errorHandler(this);
 		}
 	};
 	
@@ -135,7 +187,7 @@ function getBridgeIp(responseHandler, errorHandler) {
  * Create a new developer login url.
  * The first post will respond with an error description
  * telling the user to press the link button on the hue bridge.
- * The second post should respond with the newdevloper username.
+ * The second post should respond with the newdeveloper username.
  */
 function createNewDeveloper(pressLinkButtonHandler, successHandler, errorHandler) {
 	'use strict';
@@ -178,11 +230,119 @@ function createNewDeveloper(pressLinkButtonHandler, successHandler, errorHandler
 	xhr.onerror = function () {
 		// Unsuccessful xhr
 		if (typeof errorHandler === 'function') {
-			errorHandler(this.statusText);
+			errorHandler(this);
 		}
 	};
 	
 	sendStuff();
+}
+
+
+function dispatchBridgeIpFoundEvent(res) {
+	'use strict';
+	document.dispatchEvent(new window.CustomEvent('huebridgeip', {
+		detail: res
+	}));
+}
+
+
+function dispatchConnectionEvent(res) {
+	'use strict';
+	document.dispatchEvent(new window.CustomEvent('hueconnection', {
+		detail: res
+	}));
+}
+
+
+function dispatchErrorEvent(err) {
+	'use strict';
+	document.dispatchEvent(new window.CustomEvent('hueerror', {
+		detail: err
+	}));
+}
+
+
+function dispatchLinkButtonEvent(linkerr) {
+	'use strict';
+	document.dispatchEvent(new window.CustomEvent('huelinkbutton', {
+		detail: linkerr
+	}));
+}
+
+
+/*
+ * Called once the hue parameters have been obtained,
+ * either from storage or by finding the bridge IP and
+ * creating a new developer
+ */
+function establishConnection() {
+	'use strict';
+	// Attempt to get data from the light to test the connection
+	getStuff(function (res) {
+		// Dispatch connected event to provide the light's current colour
+		dispatchConnectionEvent(res);
+	}, function (err) {
+		//******** TODO *********//
+		// Connection failed in some way
+		// Hue parameters in storage could be incorrect
+		// Prompt user, clear storage, regather hue params
+		//***********************//
+
+		// Dispatch an event so that the user can be informed of the error
+		dispatchErrorEvent(err);
+	});
+}
+
+
+function firstTimeSetup() {
+	'use strict';
+	
+	// If none are found, first we need to find the Hue Bridge IP
+	getBridgeIp(function (res) {
+		if (res && res[0] && res[0].internalipaddress) {
+			hue.ip = res[0].internalipaddress;
+			console.log('Hue Bridge found at IP ' + hue.ip);
+			dispatchBridgeIpFoundEvent(res[0]);
+		} else {
+			console.error('Bridge IP address search failed');
+		}
+
+		// Now need to create a newdeveloper
+		createNewDeveloper(function (linkerr) {
+			// The link button needs to be pressed.
+			// Dispatch an event so the connecting splashscreen can prompt
+			// the user.
+			dispatchLinkButtonEvent(linkerr);
+		}, function (success) {
+			hue.userId = success.username;
+			console.log('New username created: ' + hue.userId);
+			//hue.userId = 'qRZ0f2agZeihyCWSBBpWPRUpRg03n9VuXTcRHtHq';
+
+			// Default hue light number
+			hue.lightNo = '2';
+
+			// Now that Hue has values set for ip, userId, and lightNo,
+			// the URLs can be set
+			setHueUrls();
+
+			// Store the hue parameters for next time
+			storage.set({
+				hue: hue
+			});
+
+			establishConnection();
+		}, function (err) {
+			// XHR to hue bridge failed
+			err.description = 'POST request to Hue Bridge failed.';
+			console.error(err.description);
+			dispatchErrorEvent(err);
+		});
+	}, function (err) {
+		// XHR to meethue broker failed
+		err.description = 'GET request to UPnP broker failed.';
+		console.error(err.description);
+		dispatchErrorEvent(err);
+	});
 }
 
 
@@ -1504,8 +1664,95 @@ function initialiseAnimationsPane() {
 }
 
 
+/******************
+   Settings Panel
+ ******************/
+
+function initialiseSettingsPanel() {
+	'use strict';
+	var hueIp = document.getElementById('hue-ip'),
+		hueUsername = document.getElementById('hue-username'),
+		hueLightNo = document.getElementById('hue-light-no'),
+		hueSave = document.getElementById('hue-save'),
+		hueClear = document.getElementById('hue-clear');
+	
+	
+	function populateLightSelection() {
+		getAllLights(function (res) {
+			var lightNo;
+			
+			// Clear the light number selection
+			hueLightNo.innerHTML = '';
+			
+			// For each light found connected to the bridge
+			for (lightNo in res) {
+				if (res.hasOwnProperty(lightNo)) {
+					// Add a named option for it to be selected
+					hueLightNo.innerHTML +=
+						'<option value="' + lightNo + '">' +
+						res[lightNo].name +
+						'</option>';
+				}
+			}
+
+			// Make sure the form elements are up to date
+			hueIp.value = hue.ip;
+			hueUsername.value = hue.userId;
+			hueLightNo.value = hue.lightNo;
+		});
+	}
+	
+	document.addEventListener('huebridgeip', function (res) {
+		hueIp.value = res.detail.internalipaddress;
+	});
+	
+	document.addEventListener('hueconnection', populateLightSelection);
+	
+	document.addEventListener('hueerror', function (e) {
+		// Update form with parameters currently being used so it is
+		// populated even though the connection failed
+		// This allows settings to be trial and errored manually.
+		hueIp.value = hue.ip;
+		hueUsername.value = hue.userId;
+		//hueLightNo.value = '<No lights found>';
+	});
+	
+	hueIp.addEventListener('change', function () {
+		hue.ip = hueIp.value;
+		setHueUrls();
+	}, false);
+	
+	hueUsername.addEventListener('change', function () {
+		hue.userId = hueUsername.value;
+		setHueUrls();
+	}, false);
+	
+	hueLightNo.addEventListener('change', function () {
+		hue.lightNo = hueLightNo.value;
+		setHueUrls();
+	}, false);
+	
+	hueSave.addEventListener('click', function () {
+		hue.ip = hueIp.value || '192.168.XXX.XXX';
+		hue.userId = hueUsername.value || 'abcdefghijklmnopqrstuvwxyz123456789ABCDE';
+		hue.lightNo = hueLightNo.value || 1;
+		setHueUrls();
+		
+		storage.set({
+			hue: hue
+		});
+		
+		populateLightSelection();
+	}, false);
+	
+	hueClear.addEventListener('click', function () {
+		storage.clear();
+	}, false);
+}
+
+
 /***************************
-   Connecting splashscreen
+   Connecting Splashscreen
  ***************************/
 
 /*
@@ -1552,7 +1799,10 @@ function initialiseConnectingSplashscreen() {
 	document.addEventListener('hueerror', function (e) {
 		var err = e.detail;
 		// Error occurred
-		connectingSplashscreen.innerHTML = '<span>An error occurred getting data from the Hue Bridge:</span><br>' + err.description + '<br>';
+		connectingSplashscreen.innerHTML =
+			'<span>An error occurred getting data from the Hue Bridge</span><br>' +
+			(err.statusText || err.description || err) +
+			'<br>';
 		connectingSplashscreen.appendChild(connectingSkip);
 	});
 	
@@ -1566,89 +1816,140 @@ function initialiseConnectingSplashscreen() {
    Connect with Hue Bridge and Initialise
  ******************************************/
 
-function initialise() {
+function LocalDataStorage() {
 	'use strict';
-	var	storage = window.localStorage;
 	
-	/*
-	 * Called once the hue parameters have been obtained,
-	 * either from storage or by finding the bridge IP and
-	 * creating a new developer
-	 */
-	function establishConnection() {
-		// Connect to the hue bridge
-
-		// Received a response, so connected to Hue Bridge	
-
-
-		// Dispatch connected event to provide the light's current colour
-		getStuff(function (res) {
-			document.dispatchEvent(new window.CustomEvent('hueconnection', {
-				detail: res
-			}));
-		}, function (err) {
-			// Connection failed in some way
-			// Hue parameters in storage could be incorrect
-			// Prompt user, clear storage, regather hue params
-			// TODO
-			
-			document.dispatchEvent(new window.CustomEvent('hueerror', {
-				detail: err
-			}));
-		});
+	// Find which type of storage to use for the environment
+	try {
+		// Webpage environment
+		this.storageType = 'local';
+		window.localStorage.available = true;
+	} catch (localErr) {
+		// window.localStorage failed
+		// Try chrome.storage.local for Chrome Apps instead
+		this.storageType = 'chrome';
+		try {
+			chrome.storage.local.set({
+				available: true
+			});
+		} catch (chromeErr) {
+			this.storageType = 'unavailable';
+			console.error('Storage unavailable');
+		}
 	}
 	
+	/*
+	 * @param key - optional, a string key for the data
+	 *              to be retrieved. If omitted, an object
+	 *              of all key:value pairs will be returned
+	 * @param callback - a callback function whose first
+	 *                   argument contains either the value
+	 *                   at the provided key, or an object of
+	 *                   all key:value pairs
+	 */
+	this.get = function (callback) {
+		var key, items;
+		
+		switch (this.storageType) {
+		case 'local':
+			items = {};
+
+			for (key in window.localStorage) {
+				if (window.localStorage.hasOwnProperty(key)) {
+					items[key] = JSON.parse(window.localStorage[key]);
+				}
+			}
+				
+			if (typeof callback === 'function') {
+				callback(items);
+			}
+			
+			break;
+
+		case 'chrome':
+			chrome.storage.local.get(null, function (items) {
+				if (typeof callback === 'function') {
+					callback(items);
+				}
+			});
+			break;
+		}
+	};
+	
+	/*
+	 * @param obj - an object of key:value pairs to be stored
+	 * @param callback - the callback function to be run once
+	 *                   the objects have been saved
+	 */
+	this.set = function (obj, callback) {
+		var key;
+		
+		switch (this.storageType) {
+		case 'local':
+			for (key in obj) {
+				if (obj.hasOwnProperty(key)) {
+					window.localStorage[key] = JSON.stringify(obj[key]);
+				}
+			}
+			console.log('Saved to local storage.');
+			break;
+
+		case 'chrome':
+			chrome.storage.local.set(obj, function () {
+				console.log('Saved to chrome storage.');
+			});
+			break;
+		}
+	};
+	
+	/*
+	 * Clears all storage
+	 */
+	this.clear = function () {
+		switch (this.storageType) {
+		case 'local':
+			window.localStorage.clear();
+			console.log('Local storage cleared.');
+			break;
+
+		case 'chrome':
+			chrome.storage.clear(function () {
+				console.log('Chrome storage cleared.');
+			});
+			break;
+		}
+	};
+}
+
+
+/******************************************
+   Connect with Hue Bridge and Initialise
+ ******************************************/
+
+function initialise() {
+	'use strict';
+
+	// Initialise components
 	initialiseConnectingSplashscreen();
 	initialiseColourWheel();
 	initialiseAnimationsPane();
+	initialiseSettingsPanel();
+	
+	// Get local storage space
+	storage = new LocalDataStorage();
 	
 	// Check for existing hue parameters
-	if (storage.hue) {
-		hue = JSON.parse(storage.hue);
-		establishConnection();
-	} else {
-		// If none are found, first we need to find the Hue Bridge IP
-		getBridgeIp(function (res) {
-			if (res && res[0] && res[0].internalipaddress) {
-				hue.ip = res[0].internalipaddress;
-				console.log('Hue Bridge found at IP ' + hue.ip);
-			} else {
-				console.error('Bridge IP address search failed');
-			}
-			
-			// Now need to create a newdeveloper
-			createNewDeveloper(function (linkerr) {
-				// The link button needs to be pressed.
-				// Dispatch an event so the connecting splashscreen can prompt
-				// the user.
-				document.dispatchEvent(new window.CustomEvent('huelinkbutton', {
-					detail: linkerr
-				}));
-			}, function (success) {
-				hue.userId = success.username;
-				console.log('New username created: ' + hue.userId);
-				//hue.userId = 'qRZ0f2agZeihyCWSBBpWPRUpRg03n9VuXTcRHtHq';
-				
-				// Default hue light number
-				hue.lightNo = '2';
-
-				// Assemble URLs
-				hue.getUrl = 'http://' + hue.ip + '/api/' + hue.userId + '/lights/' + hue.lightNo;
-				hue.putUrl = hue.getUrl + '/state';
-				
-				// Store the hue parameters for next time
-				storage.hue = JSON.stringify(hue);
-
-				establishConnection();
-			}, function (err) {
-				// XHR to hue bridge failed
-				console.error(err.statusText);
-			});
-		}, function (err) {
-			// XHR to meethue broker failed
-			console.error(err.statusText);
-		});
-	}
+	storage.get(function (items) {
+		if (items.hue) {
+			// If present, make the hue parameters global
+			hue = items.hue;
+			// Then test the connection
+			establishConnection();
+		} else {
+			// If no parameters were present
+			firstTimeSetup();
+		}
+	});
 }
 
 document.addEventListener('DOMContentLoaded', initialise, false);

@@ -122,11 +122,11 @@ button:active {
 }
 
 .button:hover {
-	color: #6FC;
+	color: #6FC !important;
 }
 
 .toggle.checked {
-	color: #6FC;
+	color: #6FC !important;
 }
 
 .toggle:not(.checked) {
@@ -371,20 +371,37 @@ input[type=range]:focus::-ms-fill-upper {
 	}
 }
 
-#help-button {
+#top-left-buttons-panel {
 	position: absolute;
-	top: 20px;
-	left: 20px;
+	display: inline-block;
+	top: 0;
+	left: 0;
+	padding: 20px;
+	text-align: left;
+	z-index: 10;
+	overflow: visible;
+}
+
+#top-left-buttons-panel .material-icons {
+	color: #CCC;
+}
+
+#help-button, #settings-button {
+	position: relative;
 	z-index: 20;
 }
 
-#help-button:hover+#help {
+#settings-button.checked~#help-button {
+	z-index: 0;
+}
+
+#help-button:hover+#help, #settings-button.checked+#settings {
 	display: block;
 }
 
-#help {
+#help, #settings {
 	display: none;
-	position: absolute;
+	position: fixed;
 	z-index: 10;
 	top: 0;
 	left: 0;
@@ -392,11 +409,11 @@ input[type=range]:focus::-ms-fill-upper {
 	bottom: 0;
 	background-color: rgba(70, 70, 70, 0.7);
 	color: #FFF;
-	padding: 50px 0 131px 0;
+	padding: 50px 0 0 0;
 	text-align: left;
 }
 
-#help .centre {
+#help .centre, #settings .centre {
 	display: block;
 	margin: auto;
 	width: 400px;
@@ -414,11 +431,18 @@ input[type=range]:focus::-ms-fill-upper {
 	padding: 4px;
 }
 
-#reset-button {
-	position: absolute;
-	top: 20px;
-	left: 50px;
-	z-index: 0;
+#settings table {
+	width: 100%;
+}
+
+#settings table input, #settings table select {
+	width: 300px;
+	text-align: left;
+	padding-left: 10px;
+}
+
+#settings #hue-save {
+	text-align: center;
 }
 
 .carousel {
