@@ -1353,7 +1353,7 @@ function initialiseAnimationsPane() {
 	'use strict';
 	var anim = document.getElementById('anim'),
 		animTable = document.getElementById('anim-table'),
-		animTbody = document.getElementsByTagName('tbody')[0],
+		animTbody = anim.getElementsByTagName('tbody')[0],
 		toggleAnimButton = document.getElementById('show-anim'),
 		addFrameButton = document.getElementById('add-frame'),
 		paramSelect = anim.getElementsByClassName('param')[0],
@@ -1688,17 +1688,17 @@ function initialiseSettingsPanel() {
 		hueMessages.classList.remove('fade-out');
 
 		switch (type) {
-			case 'info':
-				hueMessages.style.color = '#6FC';
-				break;
+		case 'info':
+			hueMessages.style.color = '#6FC';
+			break;
 
-			case 'error':
-				hueMessages.style.color = '#F44';
-				break;
+		case 'error':
+			hueMessages.style.color = '#F44';
+			break;
 
-			default:
-				hueMessages.style.color = '#CCC';
-				break;
+		default:
+			hueMessages.style.color = '#CCC';
+			break;
 		}
 
 		// Clear timeout handle in case several messages were
