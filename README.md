@@ -35,7 +35,7 @@ There are also plans to create a mobile version using PhoneGap
 ![Colour Wheel Mode](screenshots/photo.png)
 
 ##### Animation Sequencer
-![Colour Wheel Mode](screenshots/controls.png)
+![Colour Wheel Mode](screenshots/animations.png)
 
 ##### Settings
 ![Colour Wheel Mode](screenshots/settings.png)
