@@ -299,44 +299,54 @@ function firstTimeSetup() {
 
 	// If none are found, first we need to find the Hue Bridge IP
 	getBridgeIp(function (res) {
-		if (res && res[0] && res[0].internalipaddress) {
+		if (res && res.length === 0) {
+			// The request was succesful, but no bridges were found
+			console.error('UPnP returned empty array.');
+			dispatchErrorEvent({
+				description: 'Could not find any Hue bridges on the local network'
+			});
+		} else if (res && res[0] && res[0].internalipaddress) {
+			// Successfully found IP
 			hue.ip = res[0].internalipaddress;
 			console.log('Hue Bridge found at IP ' + hue.ip);
 			dispatchBridgeIpFoundEvent(res[0]);
+			
+			// Now need to create a newdeveloper
+			createNewDeveloper(function (linkerr) {
+				// The link button needs to be pressed.
+				// Dispatch an event so the connecting splashscreen can prompt
+				// the user.
+				dispatchLinkButtonEvent(linkerr);
+			}, function (success) {
+				hue.userId = success.username;
+				console.log('New username created: ' + hue.userId);
+				//hue.userId = 'qRZ0f2agZeihyCWSBBpWPRUpRg03n9VuXTcRHtHq';
+
+				// Default hue light number
+				hue.lightNo = '2';
+
+				// Now that Hue has values set for ip, userId, and lightNo,
+				// the URLs can be set
+				setHueUrls();
+
+				// Store the hue parameters for next time
+				storage.set({
+					hue: hue
+				});
+
+				establishConnection();
+			}, function (err) {
+				// XHR to hue bridge failed
+				err.description = 'POST request to Hue Bridge failed.';
+				console.error(err.description);
+				dispatchErrorEvent(err);
+			});
 		} else {
 			console.error('Bridge IP address search failed');
-		}
-
-		// Now need to create a newdeveloper
-		createNewDeveloper(function (linkerr) {
-			// The link button needs to be pressed.
-			// Dispatch an event so the connecting splashscreen can prompt
-			// the user.
-			dispatchLinkButtonEvent(linkerr);
-		}, function (success) {
-			hue.userId = success.username;
-			console.log('New username created: ' + hue.userId);
-			//hue.userId = 'qRZ0f2agZeihyCWSBBpWPRUpRg03n9VuXTcRHtHq';
-
-			// Default hue light number
-			hue.lightNo = '2';
-
-			// Now that Hue has values set for ip, userId, and lightNo,
-			// the URLs can be set
-			setHueUrls();
-
-			// Store the hue parameters for next time
-			storage.set({
-				hue: hue
+			dispatchErrorEvent({
+				description: 'Bridge IP Address search failed. Check internet connection.'
 			});
-
-			establishConnection();
-		}, function (err) {
-			// XHR to hue bridge failed
-			err.description = 'POST request to Hue Bridge failed.';
-			console.error(err.description);
-			dispatchErrorEvent(err);
-		});
+		}
 	}, function (err) {
 		// XHR to meethue broker failed
 		err.description = 'GET request to UPnP broker failed.';
