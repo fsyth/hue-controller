@@ -310,7 +310,7 @@ function firstTimeSetup() {
 			hue.ip = res[0].internalipaddress;
 			console.log('Hue Bridge found at IP ' + hue.ip);
 			dispatchBridgeIpFoundEvent(res[0]);
-			
+
 			// Now need to create a newdeveloper
 			createNewDeveloper(function (linkerr) {
 				// The link button needs to be pressed.
@@ -1445,6 +1445,28 @@ function initialiseAnimationsPane() {
 
 
 	/*
+	 * Move the frame indicator next to a given row
+	 */
+	function moveFrameIndicator(row) {
+		// Get position of row relative to the animations pane
+		// and define an offset for where the indicator is to
+		// be positioned
+		var animRect = anim.getBoundingClientRect(),
+			rowRect  =  row.getBoundingClientRect(),
+			rowX = rowRect.left - animRect.left,
+			rowY = rowRect.top  - animRect.top,
+			offsetX = -14,
+			offsetY = 1;
+
+		// Set the absolute position of the indicator
+		frameIndicator.style.left = (rowX + offsetX) + 'px';
+		frameIndicator.style.top  = (rowY + offsetY) + 'px';
+
+		// Update colour to match light
+		frameIndicator.style.color = hsv2hex(currentColour.hsv);
+	}
+
+	/*
 	 * Run one row of the animation table
 	 * @param index - the index of the row to run
 	 *                Note: index 0 is the headings row and should not be run
@@ -1522,9 +1544,7 @@ function initialiseAnimationsPane() {
 			}
 
 			// Move the frame indicator arrow
-			frameIndicator.style.top = (1.23 * index - 0.28) + 'em';
-			currentColour.hex = hsv2hex(currentColour.hsv);
-			frameIndicator.style.color = currentColour.hex;
+			moveFrameIndicator(row);
 
 			// Only run the next animation frame if the flag is true
 			if (animPlayFlag) {
@@ -1554,6 +1574,9 @@ function initialiseAnimationsPane() {
 
 		// Reset play flag to true
 		animPlayFlag = true;
+
+		// Add .playing class to #anim
+		anim.classList.add('playing');
 
 		// Ensure current colour is up to date
 		getStuff(function (res) {
@@ -1592,6 +1615,9 @@ function initialiseAnimationsPane() {
 	function stopAnimation() {
 		// Raise stop flag
 		animPlayFlag = false;
+
+		// Remove .playing class from #anim
+		anim.classList.remove('playing');
 
 		// Stop the currently running animation
 		clearTimeout(animTimeoutHandle);
@@ -1849,7 +1875,7 @@ function initialiseSettingsPanel() {
  * The splash screen will indicate that the connection is still being made.
  * It can be closed early, though the lights will not respond until the
  * connection is established.
- * The splashscrren will also display any error messages that occur when
+ * The splashscreen will also display any error messages that occur when
  * trying to connect.
  */
 function initialiseConnectingSplashscreen() {
