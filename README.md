@@ -17,7 +17,7 @@ Drag and drop the `src` directory into the extensions page for a developer insta
 The Hue Controller will now be accessible from the start menu and from chrome://apps/
 
 ## Release
-The project will be eventually be released in the Chrome Store.
+The project is now available in the [Chrome Store](https://chrome.google.com/webstore/detail/hue-light-controller/okogmhcbjehmmfmhmolkbpbhbnmmcgnd)
 There are also plans to create a mobile version using PhoneGap
 
 ## Screenshots
