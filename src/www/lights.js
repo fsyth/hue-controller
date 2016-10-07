@@ -1324,7 +1324,7 @@ function initialiseColourWheel() {
 			if (imageInput === undefined) {
 				imageInput = document.createElement('input');
 				imageInput.setAttribute('type', 'file');
-				imageInput.setAttribute('accept', 'image');
+				imageInput.setAttribute('accept', 'image/*');
 
 				imageInput.onchange = function (e) {
 					currentImage.src = window.URL.createObjectURL(e.path[0].files[0]);
