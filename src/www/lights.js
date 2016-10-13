@@ -238,6 +238,14 @@ function createNewDeveloper(pressLinkButtonHandler, successHandler, errorHandler
 }
 
 
+function dispatchStartBridgeSearchEvent(res) {
+	'use strict';
+	document.dispatchEvent(new window.CustomEvent('huebridgesearchstart', {
+		detail: res
+	}));
+}
+
+
 function dispatchBridgeIpFoundEvent(res) {
 	'use strict';
 	document.dispatchEvent(new window.CustomEvent('huebridgeip', {
@@ -296,8 +304,10 @@ function establishConnection() {
 
 function firstTimeSetup() {
 	'use strict';
+	// Dispatch event that state is currently searching for bridges
+	dispatchStartBridgeSearchEvent();
 
-	// If none are found, first we need to find the Hue Bridge IP
+	// We need to find the Hue Bridge IP if it was not found in storage
 	getBridgeIp(function (res) {
 		if (res && res.length === 0) {
 			// The request was succesful, but no bridges were found
@@ -1748,7 +1758,7 @@ function initialiseSettingsPanel() {
 	}
 
 	/*
-	 * Take values from the form and update the gloabl hue variable
+	 * Take values from the form and update the global hue variable
 	 */
 	function submitForm() {
 		hue.ip = hueIp.value || '192.168.XXX.XXX';
@@ -1882,7 +1892,12 @@ function initialiseConnectingSplashscreen() {
 	'use strict';
 	var connectingSplashscreen = document.getElementById('connecting'),
 		connectingMessage = document.getElementById('connecting-message'),
-		connectingSkip = document.getElementById('connecting-skip');
+		connectingSkip = document.getElementById('connecting-skip'),
+		connectingSpinner = document.getElementById('connecting-spinner'),
+		connectingError = document.getElementById('connecting-error'),
+		connectingErrorMessage = document.getElementById('connecting-error-message'),
+		connectingTimedOut = document.getElementById('connecting-timed-out'),
+		connectingRetryButton = document.getElementById('connecting-retry');
 
 	/*
 	 * Prematurely close the connecting pane.
@@ -1896,6 +1911,15 @@ function initialiseConnectingSplashscreen() {
 		}
 		window.alert('Please note: Hue lights will not respond until the connection is made.\nWill continue trying to connect in the background.');
 	}
+
+	/*
+	 * Reset hue parameters and reload
+	 */
+	function resetAndRetry() {
+		storage.clear();
+		location.reload();
+	}
+
 
 	// Attach a click handler that allows the connecting splashscreen to be
 	// hidden early.
@@ -1913,16 +1937,28 @@ function initialiseConnectingSplashscreen() {
 	// If an error occurs, display the error message in the splashscreen
 	document.addEventListener('hueerror', function (e) {
 		var err = e.detail;
-		// Error occurred
-		connectingSplashscreen.innerHTML =
-			'<span>An error occurred getting data from the Hue Bridge</span><br>' +
-			(err.statusText || err.description || err) +
-			'<br>';
-		connectingSplashscreen.appendChild(connectingSkip);
+
+		if (err.detail || err.description) {
+			connectingErrorMessage.innerHTML = err.detail || err.description;
+		} else {
+			connectingErrorMessage.innerHTML =  'Connection timed out.';
+			connectingTimedOut.classList.remove('hidden');
+		}
+
+		connectingSpinner.classList.add('hidden');
+		connectingError.classList.remove('hidden');
 	});
 
 	document.addEventListener('huelinkbutton', function (e) {
-		connectingMessage.innerHTML = 'Please press the link button on the Hue Bridge';
+		connectingMessage.innerHTML = 'Please press the link button on the Hue Bridge...';
+	});
+
+	document.addEventListener('huebridgeip', function (e) {
+		connectingMessage.innerHTML = 'Connecting to Hue Bridge...';
+	});
+
+	document.addEventListener('huebridgesearchstart', function(e) {
+		connectingMessage.innerHTML = 'Searching for Hue Bridges...';
 	});
 }
 

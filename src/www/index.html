@@ -13,9 +13,26 @@
 
 <body>
 	<div id="connecting">
-		<span id="connecting-message">Connecting to Hue Bridge...</span>
-		<br>
-		<i class="material-icons spin">autorenew</i>
+		<div id="connecting-spinner">
+			<span id="connecting-message">Connecting to Hue Bridge...</span>
+			<br>
+			<i class="material-icons spin">autorenew</i>
+		</div>
+		<div id="connecting-error" class="hidden">
+			<span>An error occurred getting data from the Hue Bridge
+				<br><br>
+				<span id="connecting-error-message">Connection timed out</span>
+				<br>
+				<br>
+				<span id="connecting-timed-out" class="hidden">
+					Ensure you are connected to the internet
+					<br><br>
+					Hue settings may be out of date
+					<br>
+					<button id="connecting-retry" onclick="storage.clear();location.reload();">Clear data and retry?</button>
+				</span>
+			</span>
+		</div>
 		<br>
 		<br>
 		<a id="connecting-skip" class="button">continue anyway</a>

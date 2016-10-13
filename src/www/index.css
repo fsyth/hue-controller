@@ -17,6 +17,7 @@ body {
 	user-select: none;
 }
 
+
 @-webkit-keyframes fadeIn {
 	from { opacity: 0; }
 	to   { opacity: 1; }
@@ -80,8 +81,9 @@ body {
 }
 
 .hidden {
-	display: none;
+	display: none !important;
 }
+
 
 #colour-wheel {
 	margin: 1% auto;
@@ -91,6 +93,7 @@ canvas {
 	cursor: pointer;
 	border-radius: 200px;
 }
+
 
 #buttons-panel {
 	display: inline-block;
@@ -317,6 +320,7 @@ input[type=range]:focus::-ms-fill-upper {
 	animation-duration: 0.2s;
 }
 
+
 #connecting {
 	position: absolute;
 	left: 0;
@@ -329,16 +333,12 @@ input[type=range]:focus::-ms-fill-upper {
 	color: #FFF;
 	text-align: center;
 	cursor: default;
+	line-height: 150%;
 }
 
-#connecting #connecting-message {
+#connecting-spinner, #connecting-error {
 	display: inline-block;
-	margin-top: 200px;
-}
-
-#connecting span {
-	display: inline-block;
-	margin-top: 115px;
+	margin-top: 190px;
 }
 
 #connecting .material-icons {
@@ -346,9 +346,19 @@ input[type=range]:focus::-ms-fill-upper {
 	font-size: 700%;
 }
 
-#connecting #connecting-skip {
+#connecting-skip {
 	font-size: 70%;
 }
+
+#connecting-error-message {
+	color: #F44;
+	font-weight: bold;
+}
+
+#connecting-retry {
+	width: auto;
+}
+
 
 .spin {
 	-webkit-animation: spin 2s infinite linear;
@@ -399,6 +409,7 @@ input[type=range]:focus::-ms-fill-upper {
 	}
 }
 
+
 #top-left-buttons-panel {
 	position: absolute;
 	display: inline-block;
@@ -413,6 +424,7 @@ input[type=range]:focus::-ms-fill-upper {
 #top-left-buttons-panel .material-icons {
 	color: #CCC;
 }
+
 
 #help-button, #settings-button {
 	position: relative;
@@ -477,6 +489,7 @@ input[type=range]:focus::-ms-fill-upper {
 	list-style-type: none;
 }
 
+
 #settings table {
 	width: 100%;
 }
@@ -490,6 +503,7 @@ input[type=range]:focus::-ms-fill-upper {
 #settings #hue-save {
 	text-align: center;
 }
+
 
 .carousel {
 	display: inline-block;
@@ -523,6 +537,7 @@ input[type=range]:focus::-ms-fill-upper {
 	border-bottom: 3px solid #6FC;
 	color: #6FC;
 }
+
 
 #image-gallery {
 	text-align: center;
