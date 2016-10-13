@@ -1927,6 +1927,10 @@ function initialiseConnectingSplashscreen() {
 		connectingSkip.addEventListener('click', skipConnecting, false);
 	}
 
+	if (connectingRetryButton) {
+		connectingRetryButton.addEventListener('click', resetAndRetry, false);
+	}
+
 	// Once connected, hide the splashscreen
 	document.addEventListener('hueconnection', function (e) {
 		if (connectingSplashscreen) {
