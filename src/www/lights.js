@@ -96,7 +96,8 @@ function getStuff(responseHandler, errorHandler) {
 	};
 	
 	xhr.open('GET', hue.getUrl);
-	//xhr.timeout = 30e3;
+	xhr.timeout = 30e3;
+	xhr.ontimeout = xhr.onerror;
 	xhr.send();
 }
 
@@ -181,7 +182,8 @@ function getBridgeIp(responseHandler, errorHandler) {
 
 	// Send the request to the broker
 	xhr.open('GET', 'https://www.meethue.com/api/nupnp');
-	//xhr.timeout = 30e3;
+	xhr.timeout = 30e3;
+	xhr.ontimeout = xhr.onerror;
 	xhr.send();
 }
 
