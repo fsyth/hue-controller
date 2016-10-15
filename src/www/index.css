@@ -567,3 +567,11 @@ input[type=range]:focus::-ms-fill-upper {
 	display: block;
 	margin-left: -24px;
 }
+
+#about {
+	font-size: 70%;
+	text-align: right;
+	position: absolute;
+	right: 20px;
+	bottom: 20px;
+}
