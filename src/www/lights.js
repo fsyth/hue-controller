@@ -94,8 +94,9 @@ function getStuff(responseHandler, errorHandler) {
 			errorHandler(this);
 		}
 	};
-
+	
 	xhr.open('GET', hue.getUrl);
+	//xhr.timeout = 30e3;
 	xhr.send();
 }
 
@@ -176,9 +177,11 @@ function getBridgeIp(responseHandler, errorHandler) {
 			errorHandler(this);
 		}
 	};
+	
 
 	// Send the request to the broker
 	xhr.open('GET', 'https://www.meethue.com/api/nupnp');
+	//xhr.timeout = 30e3;
 	xhr.send();
 }
 
@@ -330,7 +333,6 @@ function firstTimeSetup() {
 			}, function (success) {
 				hue.userId = success.username;
 				console.log('New username created: ' + hue.userId);
-				//hue.userId = 'qRZ0f2agZeihyCWSBBpWPRUpRg03n9VuXTcRHtHq';
 
 				// Default hue light number
 				hue.lightNo = '2';
@@ -359,7 +361,7 @@ function firstTimeSetup() {
 		}
 	}, function (err) {
 		// XHR to meethue broker failed
-		err.description = 'GET request to UPnP broker failed.';
+		err.description = 'No internet connection.';
 		console.error(err.description);
 		dispatchErrorEvent(err);
 	});
@@ -664,9 +666,9 @@ function setColour(hex) {
 }
 
 
-/*********************
-   Colour wheel demo
- *********************/
+/***********************
+   General DOM methods
+ ***********************/
 
 /*
  * Fade out, then fade in animation
@@ -687,6 +689,38 @@ function fadeInAnimation(el, time, callback) {
 	}, time);
 }
 
+
+/*
+ * Removes the .hidden class from an element
+ * @param el - the element to show
+ */
+function showElement(el) {
+	el.classList.remove('hidden');
+}
+
+
+/*
+ * Adds the .hidden class to an element
+ * @param el - the element to hide
+ */
+function hideElement(el) {
+	el.classList.add('hidden');
+}
+
+
+/*
+ * Returns whether an element is hidden or not
+ * @param el - the element to test
+ * @returns bool
+ */
+function isHidden(el) {
+	return el.classList.contains('hidden');
+}
+
+
+/*********************
+   Colour wheel demo
+ *********************/
 
 /*
  * On page load, draw colour wheel and attach mouse/touch/click events
@@ -1143,8 +1177,8 @@ function initialiseColourWheel() {
 	 * Hide the image gallery pane
 	 */
 	function hideImageGallery() {
-		if (imageGallery && !imageGallery.classList.contains('hidden')) {
-			imageGallery.classList.add('hidden');
+		if (imageGallery) {
+			hideElement(imageGallery);
 		}
 	}
 
@@ -1153,8 +1187,8 @@ function initialiseColourWheel() {
 	 * Shopw the image gallery pane
 	 */
 	function showImageGallery() {
-		if (imageGallery && imageGallery.classList.contains('hidden')) {
-			imageGallery.classList.remove('hidden');
+		if (imageGallery) {
+			showElement(imageGallery);
 		}
 	}
 
@@ -1410,19 +1444,19 @@ function initialiseAnimationsPane() {
 
 		// Hide all inputs in valTd
 		for (i = 0; i < valInputs.length; i += 1) {
-			valInputs[i].style.display = 'none';
+			hideElement(valInputs[i]);
 		}
 
 		// Then show the correct one
 		switch (e.target.value) {
 		case 'Colour':
 			// Show color input
-			valInputs[0].style.display = 'inline';
+			showElement(valInputs[0]);
 			break;
 
 		case 'On/Off':
 			// Show checkbox input
-			valInputs[1].style.display = 'inline';
+			showElement(valInputs[1]);
 			break;
 
 		case 'Hue':
@@ -1430,7 +1464,7 @@ function initialiseAnimationsPane() {
 		case 'Brightness':
 		case 'Temperature':
 			// Show number input
-			valInputs[2].style.display = 'inline';
+			showElement(valInputs[2]);
 			break;
 		}
 	}
@@ -1614,8 +1648,8 @@ function initialiseAnimationsPane() {
 		});
 
 		// Hide play button and show stop button
-		animPlayButton.classList.add('hidden');
-		animStopButton.classList.remove('hidden');
+		hideElement(animPlayButton);
+		showElement(animStopButton);
 	}
 
 
@@ -1633,8 +1667,8 @@ function initialiseAnimationsPane() {
 		clearTimeout(animTimeoutHandle);
 
 		// Show play button and hide stop button
-		animPlayButton.classList.remove('hidden');
-		animStopButton.classList.add('hidden');
+		showElement(animPlayButton);
+		hideElement(animStopButton);
 	}
 
 
@@ -1664,19 +1698,19 @@ function initialiseAnimationsPane() {
 	}
 
 	function showAnimationPane() {
-		anim.style.display = 'block';
+		showElement(anim);
 	}
 
 	function closeAnimationPane() {
-		anim.style.display = 'none';
+		hideElement(anim);
 		stopAnimation();
 	}
 
 	function toggleAnimationPane() {
-		if (anim.style.display === 'block') {
-			closeAnimationPane();
-		} else {
+		if (isHidden(anim)) {
 			showAnimationPane();
+		} else {
+			closeAnimationPane();
 		}
 	}
 
@@ -1761,8 +1795,8 @@ function initialiseSettingsPanel() {
 	 * Take values from the form and update the global hue variable
 	 */
 	function submitForm() {
-		hue.ip = hueIp.value || '192.168.XXX.XXX';
-		hue.userId = hueUsername.value || 'abcdefghijklmnopqrstuvwxyz123456789ABCDE';
+		hue.ip = hueIp.value || '192.168.0.0';
+		hue.userId = hueUsername.value || 'undefined--clear-data-and-reload-to-create-new';
 		hue.lightNo = hueLightNo.value || 1;
 		setHueUrls();
 	}
@@ -1907,7 +1941,7 @@ function initialiseConnectingSplashscreen() {
 	 */
 	function skipConnecting() {
 		if (connectingSplashscreen) {
-			connectingSplashscreen.style.display = 'none';
+			hideElement(connectingSplashscreen);
 		}
 		window.alert('Please note: Hue lights will not respond until the connection is made.\nWill continue trying to connect in the background.');
 	}
@@ -1917,7 +1951,9 @@ function initialiseConnectingSplashscreen() {
 	 */
 	function resetAndRetry() {
 		storage.clear();
-		location.reload();
+		firstTimeSetup();
+		showElement(connectingSpinner);
+		hideElement(connectingError);
 	}
 
 
@@ -1934,7 +1970,7 @@ function initialiseConnectingSplashscreen() {
 	// Once connected, hide the splashscreen
 	document.addEventListener('hueconnection', function (e) {
 		if (connectingSplashscreen) {
-			connectingSplashscreen.style.display = 'none';
+			hideElement(connectingSplashscreen);
 		}
 	});
 
@@ -1944,13 +1980,14 @@ function initialiseConnectingSplashscreen() {
 
 		if (err.detail || err.description) {
 			connectingErrorMessage.innerHTML = err.detail || err.description;
+			hideElement(connectingTimedOut);
 		} else {
 			connectingErrorMessage.innerHTML =  'Connection timed out.';
-			connectingTimedOut.classList.remove('hidden');
+			showElement(connectingTimedOut);
 		}
 
-		connectingSpinner.classList.add('hidden');
-		connectingError.classList.remove('hidden');
+		hideElement(connectingSpinner);
+		showElement(connectingError);
 	});
 
 	document.addEventListener('huelinkbutton', function (e) {
@@ -2068,7 +2105,7 @@ function LocalDataStorage() {
 			break;
 
 		case 'chrome':
-			chrome.storage.clear(function () {
+			chrome.storage.local.clear(function () {
 				console.log('Chrome storage cleared.');
 			});
 			break;
