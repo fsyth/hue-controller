@@ -94,7 +94,7 @@ function getStuff(responseHandler, errorHandler) {
 			errorHandler(this);
 		}
 	};
-	
+
 	xhr.open('GET', hue.getUrl);
 	xhr.timeout = 30e3;
 	xhr.ontimeout = xhr.onerror;
@@ -178,7 +178,7 @@ function getBridgeIp(responseHandler, errorHandler) {
 			errorHandler(this);
 		}
 	};
-	
+
 
 	// Send the request to the broker
 	xhr.open('GET', 'https://www.meethue.com/api/nupnp');
@@ -294,13 +294,12 @@ function establishConnection() {
 	getStuff(function (res) {
 		// Dispatch connected event to provide the light's current colour
 		dispatchConnectionEvent(res);
-	}, function (err) {
-		//******** TODO *********//
-		// Connection failed in some way
-		// Hue parameters in storage could be incorrect
-		// Prompt user, clear storage, regather hue params
-		//***********************//
 
+		// Hue settings clearly work, so store them for next time
+		storage.set({
+			hue: hue
+		});
+	}, function (err) {
 		// Dispatch an event so that the user can be informed of the error
 		dispatchErrorEvent(err);
 	});
@@ -309,6 +308,11 @@ function establishConnection() {
 
 function firstTimeSetup() {
 	'use strict';
+
+	if (firstTimeSetup.canTryUserIdFromSearch === undefined) {
+		firstTimeSetup.canTryUserIdFromSearch = true;
+	}
+
 	// Dispatch event that state is currently searching for bridges
 	dispatchStartBridgeSearchEvent();
 
@@ -326,35 +330,48 @@ function firstTimeSetup() {
 			console.log('Hue Bridge found at IP ' + hue.ip);
 			dispatchBridgeIpFoundEvent(res[0]);
 
-			// Now need to create a newdeveloper
-			createNewDeveloper(function (linkerr) {
-				// The link button needs to be pressed.
-				// Dispatch an event so the connecting splashscreen can prompt
-				// the user.
-				dispatchLinkButtonEvent(linkerr);
-			}, function (success) {
-				hue.userId = success.username;
-				console.log('New username created: ' + hue.userId);
+			// Check if a developer user id was included in the url
+			if (firstTimeSetup.canTryUserIdFromSearch && window.location.search) {
+				// Strip leading question mark and use search string as user id
+				hue.userId = window.location.search.replace(/^\?/, '');
+
+				// Prevent the search string from being retried if it fails
+				firstTimeSetup.canTryUserIdFromSearch = false;
 
 				// Default hue light number
-				hue.lightNo = '2';
+				hue.lightNo = '1';
 
 				// Now that Hue has values set for ip, userId, and lightNo,
 				// the URLs can be set
 				setHueUrls();
 
-				// Store the hue parameters for next time
-				storage.set({
-					hue: hue
-				});
-
 				establishConnection();
-			}, function (err) {
-				// XHR to hue bridge failed
-				err.description = 'POST request to Hue Bridge failed.';
-				console.error(err.description);
-				dispatchErrorEvent(err);
-			});
+			} else {
+				// Now need to create a newdeveloper
+				createNewDeveloper(function (linkerr) {
+					// The link button needs to be pressed.
+					// Dispatch an event so the connecting splashscreen can prompt
+					// the user.
+					dispatchLinkButtonEvent(linkerr);
+				}, function (success) {
+					hue.userId = success.username;
+					console.log('New username created: ' + hue.userId);
+
+					// Default hue light number
+					hue.lightNo = '1';
+
+					// Now that Hue has values set for ip, userId, and lightNo,
+					// the URLs can be set
+					setHueUrls();
+
+					establishConnection();
+				}, function (err) {
+					// XHR to hue bridge failed
+					err.description = 'POST request to Hue Bridge failed.';
+					console.error(err.description);
+					dispatchErrorEvent(err);
+				});
+			}
 		} else {
 			console.error('Bridge IP address search failed');
 			dispatchErrorEvent({
@@ -750,7 +767,7 @@ function initialiseColourWheel() {
 		canvas,
 		ctx,
 		buffer,
-		radius = 200,
+		radius = Math.min(200, window.innerWidth / 2 - 25),
 		W = 2 * radius,
 		H = 2 * radius,
 		i,
