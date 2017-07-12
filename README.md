@@ -1,6 +1,6 @@
 # Hue Controller
 This project contains a web page the uses an `XMLHttpRequest` on your local network to send JSON data to the Hue Light.
-[Try it here](https://rawgit.com/fsyth/hue-controller/master/src/www/index.html)
+###### [Try it here](https://fsyth.github.io/hue-controller)
 
 ## Hue Bridge Setup
 Please ensure that you have a working Hue Bridge set up on your local network.
