@@ -332,14 +332,21 @@ function firstTimeSetup() {
 
 			// Check if a developer user id was included in the url
 			if (firstTimeSetup.canTryUserIdFromSearch && window.location.search) {
-				// Strip leading question mark and use search string as user id
-				hue.userId = window.location.search.replace(/^\?/, '');
+				if (/light=[\d+]+&id=[\w-]+/.test(location.search)) {
+					// Get the user id from  id=_____ part of the query string
+					hue.userId = location.search.match(/id=([\w-]+)/)[1];
 
+					// Do the same for light=_
+					hue.lightNo = location.search.match(/light=(\d+)/)[1];
+				} else {
+					// Strip leading question mark and use search string as user id
+					hue.userId = window.location.search.replace(/^\?/, '');
+
+					// Default hue light number
+					hue.lightNo = '1';
+				}
 				// Prevent the search string from being retried if it fails
 				firstTimeSetup.canTryUserIdFromSearch = false;
-
-				// Default hue light number
-				hue.lightNo = '1';
 
 				// Now that Hue has values set for ip, userId, and lightNo,
 				// the URLs can be set
