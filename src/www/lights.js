@@ -17,20 +17,16 @@ var storage, hue = {};
 function setHueUrls() {
   'use strict';
   // Assemble URLs and assign them to the global hue object
-  hue.getUrl = 'http://' + hue.ip + '/api/' + hue.userId + '/lights/' + hue.lightNo;
+  hue.baseUrl = 'http://' + hue.ip + '/api/' + hue.userId + '/';
+  hue.getUrl = hue.baseUrl + 'lights/' + hue.lightNo;
   hue.putUrl = hue.getUrl + '/state';
 }
 
+
 /*
- * This function sends a data object to the hue light.
- * @param settings - The light settings to be overwritten
- * @param responseHandler - a callback function whose first
- *                          argument contains the response
  *
- * Note: The callback is called asynchronously once the
- * XMLHttpRequest responds.
  */
-function doStuff(settings, responseHandler, errorHandler) {
+function huePut(path, data, responseHandler, errorHandler) {
   'use strict';
   var xhr = new XMLHttpRequest();
 
@@ -51,67 +47,15 @@ function doStuff(settings, responseHandler, errorHandler) {
     }
   };
 
-  xhr.open('PUT', hue.putUrl, true);
-  xhr.send(typeof settings === 'string' ? settings : JSON.stringify(settings));
+  xhr.open('PUT', hue.baseUrl + path, true);
+  xhr.send(typeof data === 'string' ? data : JSON.stringify(data));
 }
 
 
 /*
- * This function gets the current data object held by the light
- * @param responseHandler - a callback function whose first
- *                          argument contains the response
  *
- * Note: The callback is called asynchronously once the
- * XMLHttpRequest responds.
  */
-function getStuff(responseHandler, errorHandler) {
-  'use strict';
-  var xhr = new XMLHttpRequest();
-
-  xhr.onreadystatechange = function () {
-    // If complete and succesful
-    if (this.readyState === 4 && this.status === 200) {
-      var res = JSON.parse(this.responseText);
-      //console.log(res.state);
-      if (res[0] && res[0].error) {
-        // An error occurred so alert it
-        console.log('An error occurred when getting data from the Hue Bridge:\n' +
-              res[0].error.description);
-
-        if (typeof errorHandler === 'function') {
-          errorHandler(res[0].error);
-        }
-      } else if (typeof responseHandler === 'function') {
-        // Call the response handler and pass in the state object
-        responseHandler(res.state);
-      }
-    }
-  };
-
-  xhr.onerror = function () {
-    // Unsuccessful xhr
-    if (typeof errorHandler === 'function') {
-      errorHandler(this);
-    }
-  };
-
-  xhr.open('GET', hue.getUrl);
-  xhr.timeout = 30e3;
-  xhr.ontimeout = xhr.onerror;
-  xhr.send();
-}
-
-
-/*
- * This function gets the current data object held by all lights
- * found connected to the Hue Bridge
- * @param responseHandler - a callback function whose first
- *                          argument contains the response
- *
- * Note: The callback is called asynchronously once the
- * XMLHttpRequest responds.
- */
-function getAllLights(responseHandler, errorHandler) {
+function hueGet(path, responseHandler, errorHandler) {
   'use strict';
   var xhr = new XMLHttpRequest();
 
@@ -142,8 +86,71 @@ function getAllLights(responseHandler, errorHandler) {
     }
   };
 
-  xhr.open('GET', hue.getUrl.replace(/\/\d+$/, ''));
+  xhr.open('GET', hue.baseUrl + path);
+  xhr.timeout = 30e3;
+  xhr.ontimeout = xhr.onerror;
   xhr.send();
+}
+
+/*
+ * This function sends a data object to the hue light.
+ * @param settings - The light settings to be overwritten
+ * @param responseHandler - a callback function whose first
+ *                          argument contains the response
+ *
+ * Note: The callback is called asynchronously once the
+ * XMLHttpRequest responds.
+ */
+function setState(settings, responseHandler, errorHandler) {
+  'use strict';
+  // The lightNo may be a comma separated string of lights, so split
+  // it and handle each one separately
+  var ls = hue.lightNo.split(',');
+  for (var i = 0; i < ls.length; i++) {
+    huePut('lights/' + ls[i] + '/state', settings, responseHandler, errorHandler);
+  }
+}
+
+/*
+ * This function gets the current data object held by the light
+ * @param responseHandler - a callback function whose first
+ *                          argument contains the response
+ *
+ * Note: The callback is called asynchronously once the
+ * XMLHttpRequest responds.
+ */
+function getState(responseHandler, errorHandler) {
+  'use strict';
+  hueGet('lights/' + hue.lightNo, function (res) {
+    // For some reason, you cannot GET from /state directly
+    // so GET from up one level and extract the state and
+    // pass it into the response handler
+    responseHandler(res.state);
+  }, errorHandler);
+}
+
+
+/*
+ * This function gets the current data object held by all lights
+ * found connected to the Hue Bridge
+ * @param responseHandler - a callback function whose first
+ *                          argument contains the response
+ *
+ * Note: The callback is called asynchronously once the
+ * XMLHttpRequest responds.
+ */
+function getAllLights(responseHandler, errorHandler) {
+  'use strict';
+  hueGet('lights', responseHandler, errorHandler);
+}
+
+
+/*
+ *
+ */
+function getAllGroups(responseHandler, errorHandler) {
+  'use strict';
+  hueGet('groups', responseHandler, errorHandler);
 }
 
 
@@ -291,7 +298,7 @@ function dispatchLinkButtonEvent(linkerr) {
 function establishConnection() {
   'use strict';
   // Attempt to get data from the light to test the connection
-  getStuff(function (res) {
+  getState(function (res) {
     // Dispatch connected event to provide the light's current colour
     dispatchConnectionEvent(res);
 
@@ -665,8 +672,8 @@ function ct2rgb(ct) {
  */
 function toggle() {
   'use strict';
-  getStuff(function (res) {
-    doStuff({ on: !res.on });
+  getState(function (res) {
+    setState({ on: !res.on });
   });
 }
 
@@ -682,7 +689,7 @@ function setColour(hex) {
         hex :
         '#' + ('00000' + hex.toString(16)).slice(-6);
 
-  doStuff({
+  setState({
     hue: hsv.h * 0xFFFF | 0,
     sat: hsv.s * 0xFF | 0,
     bri: hsv.v * 0xFF | 0
@@ -828,13 +835,13 @@ function initialiseColourWheel() {
     // Send the request to the light
     if (gamuts[gamut] === 'temperature') {
       // For temperature gamut, the ct value needs to be sent instead
-      doStuff({
+      setState({
         ct:  hsv.ct,
         bri: hsv.v * 0xFF | 0
       });
     } else {
       // Otherwise just send the hsv values off
-      doStuff({
+      setState({
         hue: hsv.h * 0xFFFF | 0,
         sat: hsv.s * 0xFF   | 0,
         bri: hsv.v * 0xFF   | 0
@@ -1556,7 +1563,7 @@ function initialiseAnimationsPane() {
         switch (param) {
         case 'Colour':
           currentColour.hsv = hex2hsv(valueInputs[0].value);
-          doStuff({
+          setState({
             hue: currentColour.hsv.h * 0xFFFF | 0,
             sat: currentColour.hsv.s * 0xFF   | 0,
             bri: currentColour.hsv.v * 0xFF   | 0
@@ -1565,27 +1572,27 @@ function initialiseAnimationsPane() {
 
         case 'Hue':
           currentColour.hsv.h = parseFloat(valueInputs[2].value);
-          doStuff({
+          setState({
             hue: currentColour.hsv.h * 0xFFFF | 0
           });
           break;
 
         case 'Saturation':
           currentColour.hsv.s = parseFloat(valueInputs[2].value);
-          doStuff({
+          setState({
             sat: currentColour.hsv.s * 0xFF | 0
           });
           break;
 
         case 'Brightness':
           currentColour.hsv.v = parseFloat(valueInputs[2].value);
-          doStuff({
+          setState({
             bri: currentColour.hsv.v * 0xFF | 0
           });
           break;
 
         case 'Temperature':
-          doStuff({
+          setState({
             ct: parseFloat(valueInputs[2].value) * 347 + 153 | 0
           });
           break;
@@ -1596,7 +1603,7 @@ function initialiseAnimationsPane() {
             s: Math.random(),
             v: Math.random()
           };
-          doStuff({
+          setState({
             hue: currentColour.hsv.h * 0xFFFF | 0,
             sat: currentColour.hsv.s * 0xFF   | 0,
             bri: currentColour.hsv.v * 0xFF   | 0
@@ -1605,7 +1612,7 @@ function initialiseAnimationsPane() {
 
         case 'On/Off':
           currentColour.on = valueInputs[1].checked;
-          doStuff({
+          setState({
             on: currentColour.on
           });
           setFrameIndicatorSymbol();
@@ -1649,7 +1656,7 @@ function initialiseAnimationsPane() {
     anim.classList.add('playing');
 
     // Ensure current colour is up to date
-    getStuff(function (res) {
+    getState(function (res) {
       currentColour = {
         hsv: {
           h: res.hue / 0xFFFF,
@@ -1832,20 +1839,38 @@ function initialiseSettingsPanel() {
    * fill the light selection dropdown with room names
    */
   function populateLightSelection() {
-    getAllLights(function (res) {
-      var lightNo,
-        lightNames = [];
+    // Make sure the form elements are up to date
+    hueIp.value = hue.ip;
+    hueUsername.value = hue.userId;
 
-      // Clear the light number selection
-      hueLightNo.innerHTML = '';
+    // Clear the light number selection
+    hueLightNo.innerHTML = '';
+
+    getAllGroups(function (res) {
+      for (var groupNo in res) {
+        if (res.hasOwnProperty(groupNo)) {
+          // Add a named option for the group to be selected
+          hueLightNo.innerHTML +=
+            '<option value="' + res[groupNo].lights.join() + '">' +
+            '[ROOM] ' + res[groupNo].name +
+            '</option>';
+        }
+      }
+
+      // Make sure the form elements are up to date
+      hueLightNo.value = hue.lightNo;
+    });
+
+    getAllLights(function (res) {
+      var lightNames = [];
 
       // For each light found connected to the bridge
-      for (lightNo in res) {
+      for (var lightNo in res) {
         if (res.hasOwnProperty(lightNo)) {
           // Add a named option for it to be selected
           hueLightNo.innerHTML +=
             '<option value="' + lightNo + '">' +
-            res[lightNo].name +
+            '[LIGHT] ' + res[lightNo].name +
             '</option>';
 
           lightNames.push(res[lightNo].name);
@@ -1859,8 +1884,6 @@ function initialiseSettingsPanel() {
       }
 
       // Make sure the form elements are up to date
-      hueIp.value = hue.ip;
-      hueUsername.value = hue.userId;
       hueLightNo.value = hue.lightNo;
     }, function (err) {
       // Could not find any lights
@@ -2161,6 +2184,7 @@ function initialise() {
     if (items.hue) {
       // If present, make the hue parameters global
       hue = items.hue;
+      setHueUrls();
       // Then test the connection
       establishConnection();
     } else {
