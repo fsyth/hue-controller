@@ -499,6 +499,10 @@ input[type=range]:focus::-ms-fill-upper {
   padding-left: 10px;
 }
 
+#settings table select {
+  width: 310px;
+}
+
 #settings #hue-save {
   text-align: center;
 }
