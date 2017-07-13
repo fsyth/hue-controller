@@ -15,10 +15,10 @@ var storage, hue = {};
 
 
 function setHueUrls() {
-	'use strict';
-	// Assemble URLs and assign them to the global hue object
-	hue.getUrl = 'http://' + hue.ip + '/api/' + hue.userId + '/lights/' + hue.lightNo;
-	hue.putUrl = hue.getUrl + '/state';
+  'use strict';
+  // Assemble URLs and assign them to the global hue object
+  hue.getUrl = 'http://' + hue.ip + '/api/' + hue.userId + '/lights/' + hue.lightNo;
+  hue.putUrl = hue.getUrl + '/state';
 }
 
 /*
@@ -31,28 +31,28 @@ function setHueUrls() {
  * XMLHttpRequest responds.
  */
 function doStuff(settings, responseHandler, errorHandler) {
-	'use strict';
-	var xhr = new XMLHttpRequest();
+  'use strict';
+  var xhr = new XMLHttpRequest();
 
-	xhr.onreadystatechange = function () {
-		if (this.readyState === 4 && this.status === 200) {
-			var res = JSON.parse(this.responseText);
-			//console.log(res[0]);
-			if (typeof responseHandler === 'function') {
-				responseHandler(res[0]);
-			}
-		}
-	};
+  xhr.onreadystatechange = function () {
+    if (this.readyState === 4 && this.status === 200) {
+      var res = JSON.parse(this.responseText);
+      //console.log(res[0]);
+      if (typeof responseHandler === 'function') {
+        responseHandler(res[0]);
+      }
+    }
+  };
 
-	xhr.onerror = function () {
-		// Unsuccessful xhr
-		if (typeof errorHandler === 'function') {
-			errorHandler(this);
-		}
-	};
+  xhr.onerror = function () {
+    // Unsuccessful xhr
+    if (typeof errorHandler === 'function') {
+      errorHandler(this);
+    }
+  };
 
-	xhr.open('PUT', hue.putUrl, true);
-	xhr.send(typeof settings === 'string' ? settings : JSON.stringify(settings));
+  xhr.open('PUT', hue.putUrl, true);
+  xhr.send(typeof settings === 'string' ? settings : JSON.stringify(settings));
 }
 
 
@@ -65,40 +65,40 @@ function doStuff(settings, responseHandler, errorHandler) {
  * XMLHttpRequest responds.
  */
 function getStuff(responseHandler, errorHandler) {
-	'use strict';
-	var xhr = new XMLHttpRequest();
+  'use strict';
+  var xhr = new XMLHttpRequest();
 
-	xhr.onreadystatechange = function () {
-		// If complete and succesful
-		if (this.readyState === 4 && this.status === 200) {
-			var res = JSON.parse(this.responseText);
-			//console.log(res.state);
-			if (res[0] && res[0].error) {
-				// An error occurred so alert it
-				console.log('An error occurred when getting data from the Hue Bridge:\n' +
-							res[0].error.description);
+  xhr.onreadystatechange = function () {
+    // If complete and succesful
+    if (this.readyState === 4 && this.status === 200) {
+      var res = JSON.parse(this.responseText);
+      //console.log(res.state);
+      if (res[0] && res[0].error) {
+        // An error occurred so alert it
+        console.log('An error occurred when getting data from the Hue Bridge:\n' +
+              res[0].error.description);
 
-				if (typeof errorHandler === 'function') {
-					errorHandler(res[0].error);
-				}
-			} else if (typeof responseHandler === 'function') {
-				// Call the response handler and pass in the state object
-				responseHandler(res.state);
-			}
-		}
-	};
+        if (typeof errorHandler === 'function') {
+          errorHandler(res[0].error);
+        }
+      } else if (typeof responseHandler === 'function') {
+        // Call the response handler and pass in the state object
+        responseHandler(res.state);
+      }
+    }
+  };
 
-	xhr.onerror = function () {
-		// Unsuccessful xhr
-		if (typeof errorHandler === 'function') {
-			errorHandler(this);
-		}
-	};
+  xhr.onerror = function () {
+    // Unsuccessful xhr
+    if (typeof errorHandler === 'function') {
+      errorHandler(this);
+    }
+  };
 
-	xhr.open('GET', hue.getUrl);
-	xhr.timeout = 30e3;
-	xhr.ontimeout = xhr.onerror;
-	xhr.send();
+  xhr.open('GET', hue.getUrl);
+  xhr.timeout = 30e3;
+  xhr.ontimeout = xhr.onerror;
+  xhr.send();
 }
 
 
@@ -112,38 +112,38 @@ function getStuff(responseHandler, errorHandler) {
  * XMLHttpRequest responds.
  */
 function getAllLights(responseHandler, errorHandler) {
-	'use strict';
-	var xhr = new XMLHttpRequest();
+  'use strict';
+  var xhr = new XMLHttpRequest();
 
-	xhr.onreadystatechange = function () {
-		// If complete and succesful
-		if (this.readyState === 4 && this.status === 200) {
-			var res = JSON.parse(this.responseText);
-			//console.log(res.state);
-			if (res[0] && res[0].error) {
-				// An error occurred so alert it
-				console.log('An error occurred when getting data from the Hue Bridge:\n' +
-							res[0].error.description);
+  xhr.onreadystatechange = function () {
+    // If complete and succesful
+    if (this.readyState === 4 && this.status === 200) {
+      var res = JSON.parse(this.responseText);
+      //console.log(res.state);
+      if (res[0] && res[0].error) {
+        // An error occurred so alert it
+        console.log('An error occurred when getting data from the Hue Bridge:\n' +
+              res[0].error.description);
 
-				if (typeof errorHandler === 'function') {
-					errorHandler(res[0].error);
-				}
-			} else if (typeof responseHandler === 'function') {
-				// Call the response handler and pass in the state object
-				responseHandler(res);
-			}
-		}
-	};
+        if (typeof errorHandler === 'function') {
+          errorHandler(res[0].error);
+        }
+      } else if (typeof responseHandler === 'function') {
+        // Call the response handler and pass in the state object
+        responseHandler(res);
+      }
+    }
+  };
 
-	xhr.onerror = function () {
-		// Unsuccessful xhr
-		if (typeof errorHandler === 'function') {
-			errorHandler(this);
-		}
-	};
+  xhr.onerror = function () {
+    // Unsuccessful xhr
+    if (typeof errorHandler === 'function') {
+      errorHandler(this);
+    }
+  };
 
-	xhr.open('GET', hue.getUrl.replace(/\/\d+$/, ''));
-	xhr.send();
+  xhr.open('GET', hue.getUrl.replace(/\/\d+$/, ''));
+  xhr.send();
 }
 
 
@@ -157,34 +157,34 @@ function getAllLights(responseHandler, errorHandler) {
  * XMLHttpRequest responds.
  */
 function getBridgeIp(responseHandler, errorHandler) {
-	'use strict';
-	var xhr = new XMLHttpRequest();
+  'use strict';
+  var xhr = new XMLHttpRequest();
 
-	xhr.onreadystatechange = function () {
-		// If complete and succesful
-		if (this.readyState === 4 && this.status === 200) {
-			var res = JSON.parse(this.responseText);
-			if (typeof responseHandler === 'function') {
-				// Call the response handler and pass in
-				// { id, internalipaddress }
-				responseHandler(res);
-			}
-		}
-	};
+  xhr.onreadystatechange = function () {
+    // If complete and succesful
+    if (this.readyState === 4 && this.status === 200) {
+      var res = JSON.parse(this.responseText);
+      if (typeof responseHandler === 'function') {
+        // Call the response handler and pass in
+        // { id, internalipaddress }
+        responseHandler(res);
+      }
+    }
+  };
 
-	xhr.onerror = function () {
-		// Unsuccessful xhr
-		if (typeof errorHandler === 'function') {
-			errorHandler(this);
-		}
-	};
+  xhr.onerror = function () {
+    // Unsuccessful xhr
+    if (typeof errorHandler === 'function') {
+      errorHandler(this);
+    }
+  };
 
 
-	// Send the request to the broker
-	xhr.open('GET', 'https://www.meethue.com/api/nupnp');
-	xhr.timeout = 30e3;
-	xhr.ontimeout = xhr.onerror;
-	xhr.send();
+  // Send the request to the broker
+  xhr.open('GET', 'https://www.meethue.com/api/nupnp');
+  xhr.timeout = 30e3;
+  xhr.ontimeout = xhr.onerror;
+  xhr.send();
 }
 
 
@@ -195,91 +195,91 @@ function getBridgeIp(responseHandler, errorHandler) {
  * The second post should respond with the newdeveloper username.
  */
 function createNewDeveloper(pressLinkButtonHandler, successHandler, errorHandler) {
-	'use strict';
-	var xhr = new XMLHttpRequest();
+  'use strict';
+  var xhr = new XMLHttpRequest();
 
-	function sendStuff() {
-		xhr.open('POST', 'http://' + hue.ip + '/api');
-		xhr.send(JSON.stringify({
-			devicetype: "hue-controller#node"
-		}));
-		//console.log('requesting new user id');
-	}
+  function sendStuff() {
+    xhr.open('POST', 'http://' + hue.ip + '/api');
+    xhr.send(JSON.stringify({
+      devicetype: "hue-controller#node"
+    }));
+    //console.log('requesting new user id');
+  }
 
-	xhr.onreadystatechange = function () {
-		// If complete and succesful
-		if (this.readyState === 4 && this.status === 200) {
-			//console.log('response received');
-			var res = JSON.parse(this.responseText);
+  xhr.onreadystatechange = function () {
+    // If complete and succesful
+    if (this.readyState === 4 && this.status === 200) {
+      //console.log('response received');
+      var res = JSON.parse(this.responseText);
 
-			if (res[0] && res[0].error && res[0].error.type === 101) {
-				// Link button needs to be pressed
-				// Prompt user in the handler
-				if (typeof pressLinkButtonHandler === 'function') {
-					pressLinkButtonHandler(res[0].error);
-				}
+      if (res[0] && res[0].error && res[0].error.type === 101) {
+        // Link button needs to be pressed
+        // Prompt user in the handler
+        if (typeof pressLinkButtonHandler === 'function') {
+          pressLinkButtonHandler(res[0].error);
+        }
 
-				// Try posting again until it is succesful
-				setTimeout(sendStuff, 1000);
-			} else if (res[0] && res[0].success) {
-				// Link button was pressed
-				if (typeof successHandler === 'function') {
-					// Call the response handler and pass in
-					// { username }
-					successHandler(res[0].success);
-				}
-			}
-		}
-	};
+        // Try posting again until it is succesful
+        setTimeout(sendStuff, 1000);
+      } else if (res[0] && res[0].success) {
+        // Link button was pressed
+        if (typeof successHandler === 'function') {
+          // Call the response handler and pass in
+          // { username }
+          successHandler(res[0].success);
+        }
+      }
+    }
+  };
 
-	xhr.onerror = function () {
-		// Unsuccessful xhr
-		if (typeof errorHandler === 'function') {
-			errorHandler(this);
-		}
-	};
+  xhr.onerror = function () {
+    // Unsuccessful xhr
+    if (typeof errorHandler === 'function') {
+      errorHandler(this);
+    }
+  };
 
-	sendStuff();
+  sendStuff();
 }
 
 
 function dispatchStartBridgeSearchEvent(res) {
-	'use strict';
-	document.dispatchEvent(new window.CustomEvent('huebridgesearchstart', {
-		detail: res
-	}));
+  'use strict';
+  document.dispatchEvent(new window.CustomEvent('huebridgesearchstart', {
+    detail: res
+  }));
 }
 
 
 function dispatchBridgeIpFoundEvent(res) {
-	'use strict';
-	document.dispatchEvent(new window.CustomEvent('huebridgeip', {
-		detail: res
-	}));
+  'use strict';
+  document.dispatchEvent(new window.CustomEvent('huebridgeip', {
+    detail: res
+  }));
 }
 
 
 function dispatchConnectionEvent(res) {
-	'use strict';
-	document.dispatchEvent(new window.CustomEvent('hueconnection', {
-		detail: res
-	}));
+  'use strict';
+  document.dispatchEvent(new window.CustomEvent('hueconnection', {
+    detail: res
+  }));
 }
 
 
 function dispatchErrorEvent(err) {
-	'use strict';
-	document.dispatchEvent(new window.CustomEvent('hueerror', {
-		detail: err
-	}));
+  'use strict';
+  document.dispatchEvent(new window.CustomEvent('hueerror', {
+    detail: err
+  }));
 }
 
 
 function dispatchLinkButtonEvent(linkerr) {
-	'use strict';
-	document.dispatchEvent(new window.CustomEvent('huelinkbutton', {
-		detail: linkerr
-	}));
+  'use strict';
+  document.dispatchEvent(new window.CustomEvent('huelinkbutton', {
+    detail: linkerr
+  }));
 }
 
 
@@ -289,108 +289,108 @@ function dispatchLinkButtonEvent(linkerr) {
  * creating a new developer
  */
 function establishConnection() {
-	'use strict';
-	// Attempt to get data from the light to test the connection
-	getStuff(function (res) {
-		// Dispatch connected event to provide the light's current colour
-		dispatchConnectionEvent(res);
+  'use strict';
+  // Attempt to get data from the light to test the connection
+  getStuff(function (res) {
+    // Dispatch connected event to provide the light's current colour
+    dispatchConnectionEvent(res);
 
-		// Hue settings clearly work, so store them for next time
-		storage.set({
-			hue: hue
-		});
-	}, function (err) {
-		// Dispatch an event so that the user can be informed of the error
-		dispatchErrorEvent(err);
-	});
+    // Hue settings clearly work, so store them for next time
+    storage.set({
+      hue: hue
+    });
+  }, function (err) {
+    // Dispatch an event so that the user can be informed of the error
+    dispatchErrorEvent(err);
+  });
 }
 
 
 function firstTimeSetup() {
-	'use strict';
+  'use strict';
 
-	if (firstTimeSetup.canTryUserIdFromSearch === undefined) {
-		firstTimeSetup.canTryUserIdFromSearch = true;
-	}
+  if (firstTimeSetup.canTryUserIdFromSearch === undefined) {
+    firstTimeSetup.canTryUserIdFromSearch = true;
+  }
 
-	// Dispatch event that state is currently searching for bridges
-	dispatchStartBridgeSearchEvent();
+  // Dispatch event that state is currently searching for bridges
+  dispatchStartBridgeSearchEvent();
 
-	// We need to find the Hue Bridge IP if it was not found in storage
-	getBridgeIp(function (res) {
-		if (res && res.length === 0) {
-			// The request was succesful, but no bridges were found
-			console.error('UPnP returned empty array.');
-			dispatchErrorEvent({
-				description: 'Could not find any Hue bridges on the local network'
-			});
-		} else if (res && res[0] && res[0].internalipaddress) {
-			// Successfully found IP
-			hue.ip = res[0].internalipaddress;
-			console.log('Hue Bridge found at IP ' + hue.ip);
-			dispatchBridgeIpFoundEvent(res[0]);
+  // We need to find the Hue Bridge IP if it was not found in storage
+  getBridgeIp(function (res) {
+    if (res && res.length === 0) {
+      // The request was succesful, but no bridges were found
+      console.error('UPnP returned empty array.');
+      dispatchErrorEvent({
+        description: 'Could not find any Hue bridges on the local network'
+      });
+    } else if (res && res[0] && res[0].internalipaddress) {
+      // Successfully found IP
+      hue.ip = res[0].internalipaddress;
+      console.log('Hue Bridge found at IP ' + hue.ip);
+      dispatchBridgeIpFoundEvent(res[0]);
 
-			// Check if a developer user id was included in the url
-			if (firstTimeSetup.canTryUserIdFromSearch && window.location.search) {
-				if (/light=[\d+]+&id=[\w-]+/.test(location.search)) {
-					// Get the user id from  id=_____ part of the query string
-					hue.userId = location.search.match(/id=([\w-]+)/)[1];
+      // Check if a developer user id was included in the url
+      if (firstTimeSetup.canTryUserIdFromSearch && window.location.search) {
+        if (/light=[\d+]+&id=[\w-]+/.test(location.search)) {
+          // Get the user id from  id=_____ part of the query string
+          hue.userId = location.search.match(/id=([\w-]+)/)[1];
 
-					// Do the same for light=_
-					hue.lightNo = location.search.match(/light=(\d+)/)[1];
-				} else {
-					// Strip leading question mark and use search string as user id
-					hue.userId = window.location.search.replace(/^\?/, '');
+          // Do the same for light=_
+          hue.lightNo = location.search.match(/light=(\d+)/)[1];
+        } else {
+          // Strip leading question mark and use search string as user id
+          hue.userId = window.location.search.replace(/^\?/, '');
 
-					// Default hue light number
-					hue.lightNo = '1';
-				}
-				// Prevent the search string from being retried if it fails
-				firstTimeSetup.canTryUserIdFromSearch = false;
+          // Default hue light number
+          hue.lightNo = '1';
+        }
+        // Prevent the search string from being retried if it fails
+        firstTimeSetup.canTryUserIdFromSearch = false;
 
-				// Now that Hue has values set for ip, userId, and lightNo,
-				// the URLs can be set
-				setHueUrls();
+        // Now that Hue has values set for ip, userId, and lightNo,
+        // the URLs can be set
+        setHueUrls();
 
-				establishConnection();
-			} else {
-				// Now need to create a newdeveloper
-				createNewDeveloper(function (linkerr) {
-					// The link button needs to be pressed.
-					// Dispatch an event so the connecting splashscreen can prompt
-					// the user.
-					dispatchLinkButtonEvent(linkerr);
-				}, function (success) {
-					hue.userId = success.username;
-					console.log('New username created: ' + hue.userId);
+        establishConnection();
+      } else {
+        // Now need to create a newdeveloper
+        createNewDeveloper(function (linkerr) {
+          // The link button needs to be pressed.
+          // Dispatch an event so the connecting splashscreen can prompt
+          // the user.
+          dispatchLinkButtonEvent(linkerr);
+        }, function (success) {
+          hue.userId = success.username;
+          console.log('New username created: ' + hue.userId);
 
-					// Default hue light number
-					hue.lightNo = '1';
+          // Default hue light number
+          hue.lightNo = '1';
 
-					// Now that Hue has values set for ip, userId, and lightNo,
-					// the URLs can be set
-					setHueUrls();
+          // Now that Hue has values set for ip, userId, and lightNo,
+          // the URLs can be set
+          setHueUrls();
 
-					establishConnection();
-				}, function (err) {
-					// XHR to hue bridge failed
-					err.description = 'POST request to Hue Bridge failed.';
-					console.error(err.description);
-					dispatchErrorEvent(err);
-				});
-			}
-		} else {
-			console.error('Bridge IP address search failed');
-			dispatchErrorEvent({
-				description: 'Bridge IP Address search failed. Check internet connection.'
-			});
-		}
-	}, function (err) {
-		// XHR to meethue broker failed
-		err.description = 'No internet connection.';
-		console.error(err.description);
-		dispatchErrorEvent(err);
-	});
+          establishConnection();
+        }, function (err) {
+          // XHR to hue bridge failed
+          err.description = 'POST request to Hue Bridge failed.';
+          console.error(err.description);
+          dispatchErrorEvent(err);
+        });
+      }
+    } else {
+      console.error('Bridge IP address search failed');
+      dispatchErrorEvent({
+        description: 'Bridge IP Address search failed. Check internet connection.'
+      });
+    }
+  }, function (err) {
+    // XHR to meethue broker failed
+    err.description = 'No internet connection.';
+    console.error(err.description);
+    dispatchErrorEvent(err);
+  });
 }
 
 
@@ -399,8 +399,8 @@ function firstTimeSetup() {
  *********************/
 
 function clamp(num, min, max) {
-	'use strict';
-	return num < min ? min : num > max ? max : num;
+  'use strict';
+  return num < min ? min : num > max ? max : num;
 }
 
 
@@ -417,65 +417,65 @@ function clamp(num, min, max) {
  *                        red, green and blue (range 0-255)
  */
 function hsv2rgb(h, s, v) {
-	'use strict';
-	var r, g, b, i, f, p, q, t;
+  'use strict';
+  var r, g, b, i, f, p, q, t;
 
-	// Allow an object { h, s, v } to be passed as h
-	if (arguments.length === 1) {
-		s = h.s;
-		v = h.v;
-		h = h.h;
-	}
+  // Allow an object { h, s, v } to be passed as h
+  if (arguments.length === 1) {
+    s = h.s;
+    v = h.v;
+    h = h.h;
+  }
 
-	i = h * 6 | 0;
-	f = h * 6 - i;
-	p = v * (1 - s);
-	q = v * (1 - f * s);
-	t = v * (1 - (1 - f) * s);
+  i = h * 6 | 0;
+  f = h * 6 - i;
+  p = v * (1 - s);
+  q = v * (1 - f * s);
+  t = v * (1 - (1 - f) * s);
 
-	switch (i % 6) {
-	case 0:
-		r = v;
-		g = t;
-		b = p;
-		break;
+  switch (i % 6) {
+  case 0:
+    r = v;
+    g = t;
+    b = p;
+    break;
 
-	case 1:
-		r = q;
-		g = v;
-		b = p;
-		break;
+  case 1:
+    r = q;
+    g = v;
+    b = p;
+    break;
 
-	case 2:
-		r = p;
-		g = v;
-		b = t;
-		break;
+  case 2:
+    r = p;
+    g = v;
+    b = t;
+    break;
 
-	case 3:
-		r = p;
-		g = q;
-		b = v;
-		break;
+  case 3:
+    r = p;
+    g = q;
+    b = v;
+    break;
 
-	case 4:
-		r = t;
-		g = p;
-		b = v;
-		break;
+  case 4:
+    r = t;
+    g = p;
+    b = v;
+    break;
 
-	case 5:
-		r = v;
-		g = p;
-		b = q;
-		break;
-	}
+  case 5:
+    r = v;
+    g = p;
+    b = q;
+    break;
+  }
 
-	return {
-		r: r * 0xFF | 0,
-		g: g * 0xFF | 0,
-		b: b * 0xFF | 0
-	};
+  return {
+    r: r * 0xFF | 0,
+    g: g * 0xFF | 0,
+    b: b * 0xFF | 0
+  };
 }
 
 
@@ -492,54 +492,54 @@ function hsv2rgb(h, s, v) {
  *                        hue, saturation and visibility (range 0-1)
  */
 function rgb2hsv(r, g, b) {
-	'use strict';
-	// Allow an object { r, g, b } to be passed as r
-	if (arguments.length === 1) {
-		g = r.g;
-		b = r.b;
-		r = r.r;
-	}
+  'use strict';
+  // Allow an object { r, g, b } to be passed as r
+  if (arguments.length === 1) {
+    g = r.g;
+    b = r.b;
+    r = r.r;
+  }
 
-	r /= 0xFF;
-	g /= 0xFF;
-	b /= 0xFF;
+  r /= 0xFF;
+  g /= 0xFF;
+  b /= 0xFF;
 
-	var rr, gg, bb,
-		h, s,
-		v = Math.max(r, g, b),
-		diff = v - Math.min(r, g, b),
-		diffc = function (c) {
-			return (v - c) / 6 / diff + 1 / 2;
-		};
+  var rr, gg, bb,
+    h, s,
+    v = Math.max(r, g, b),
+    diff = v - Math.min(r, g, b),
+    diffc = function (c) {
+      return (v - c) / 6 / diff + 1 / 2;
+    };
 
-	if (diff === 0) {
-		h = s = 0;
-	} else {
-		s = diff / v;
-		rr = diffc(r);
-		gg = diffc(g);
-		bb = diffc(b);
+  if (diff === 0) {
+    h = s = 0;
+  } else {
+    s = diff / v;
+    rr = diffc(r);
+    gg = diffc(g);
+    bb = diffc(b);
 
-		if (r === v) {
-			h = bb - gg;
-		} else if (g === v) {
-			h = (1 / 3) + rr - bb;
-		} else if (b === v) {
-			h = (2 / 3) + gg - rr;
-		}
+    if (r === v) {
+      h = bb - gg;
+    } else if (g === v) {
+      h = (1 / 3) + rr - bb;
+    } else if (b === v) {
+      h = (2 / 3) + gg - rr;
+    }
 
-		if (h < 0) {
-			h += 1;
-		} else if (h > 1) {
-			h -= 1;
-		}
-	}
+    if (h < 0) {
+      h += 1;
+    } else if (h > 1) {
+      h -= 1;
+    }
+  }
 
-	return {
-		h: h,
-		s: s,
-		v: v
-	};
+  return {
+    h: h,
+    s: s,
+    v: v
+  };
 }
 
 
@@ -550,16 +550,16 @@ function rgb2hsv(r, g, b) {
  *                        hue, saturation and visibility (range 0-1)
  */
 function hex2hsv(hex) {
-	'use strict';
-	if (typeof hex === 'string') {
-		hex = parseInt(hex.replace(/^#/, ''), 16);
-	}
+  'use strict';
+  if (typeof hex === 'string') {
+    hex = parseInt(hex.replace(/^#/, ''), 16);
+  }
 
-	var r = (hex & 0xFF0000) >> 16,
-		g = (hex & 0x00FF00) >> 8,
-		b = (hex & 0x0000FF) >> 0;
+  var r = (hex & 0xFF0000) >> 16,
+    g = (hex & 0x00FF00) >> 8,
+    b = (hex & 0x0000FF) >> 0;
 
-	return rgb2hsv(r, g, b);
+  return rgb2hsv(r, g, b);
 }
 
 
@@ -575,15 +575,15 @@ function hex2hsv(hex) {
  * @returns string - formatted '#rrggbb'
  */
 function rgb2hex(r, g, b) {
-	'use strict';
-	// Allow an object { r, g, b } to be passed as r
-	if (arguments.length === 1) {
-		g = r.g;
-		b = r.b;
-		r = r.r;
-	}
+  'use strict';
+  // Allow an object { r, g, b } to be passed as r
+  if (arguments.length === 1) {
+    g = r.g;
+    b = r.b;
+    r = r.r;
+  }
 
-	return '#' + ('00000' + ((r << 16) + (g << 8) + b).toString(16)).slice(-6);
+  return '#' + ('00000' + ((r << 16) + (g << 8) + b).toString(16)).slice(-6);
 }
 
 
@@ -599,21 +599,21 @@ function rgb2hex(r, g, b) {
  * @returns string - formatted '#rrggbb'
  */
 function hsv2hex(h, s, v) {
-	'use strict';
-	var rgb;
+  'use strict';
+  var rgb;
 
-	// Allow an object { h, s, v } to be passed as h
-	if (arguments.length === 1) {
-		s = h.s;
-		v = h.v;
-		h = h.h;
-	}
+  // Allow an object { h, s, v } to be passed as h
+  if (arguments.length === 1) {
+    s = h.s;
+    v = h.v;
+    h = h.h;
+  }
 
-	// Convert hsv to rgb
-	rgb = hsv2rgb(h, s, v);
+  // Convert hsv to rgb
+  rgb = hsv2rgb(h, s, v);
 
-	// Convert rgb to hex
-	return rgb2hex(rgb);
+  // Convert rgb to hex
+  return rgb2hex(rgb);
 }
 
 
@@ -621,38 +621,38 @@ function hsv2hex(h, s, v) {
  * Converts colour temperature to rgb format
  */
 function ct2rgb(ct) {
-	'use strict';
-	ct /= 100;
+  'use strict';
+  ct /= 100;
 
-	var r, g, b;
+  var r, g, b;
 
-	if (ct <= 66) {
-		r = 255;
+  if (ct <= 66) {
+    r = 255;
 
-		g = ct;
-		g = 99.4708025861 * Math.log(g) - 161.1195681661;
+    g = ct;
+    g = 99.4708025861 * Math.log(g) - 161.1195681661;
 
-		if (ct <= 19) {
-			b = 0;
-		} else {
-			b = ct - 10;
-			b = 138.5177312231 * Math.log(b) - 305.0447927307;
-		}
-	} else {
-		r = ct - 60;
-		r = 329.698727446 * Math.pow(r, -0.1332047592);
+    if (ct <= 19) {
+      b = 0;
+    } else {
+      b = ct - 10;
+      b = 138.5177312231 * Math.log(b) - 305.0447927307;
+    }
+  } else {
+    r = ct - 60;
+    r = 329.698727446 * Math.pow(r, -0.1332047592);
 
-		g = ct - 60;
-		g = 288.1221695283 * Math.pow(g, -0.0755148492);
+    g = ct - 60;
+    g = 288.1221695283 * Math.pow(g, -0.0755148492);
 
-		b = 255;
-	}
+    b = 255;
+  }
 
-	return {
-		r: clamp(r, 0, 0xFF) | 0,
-		g: clamp(g, 0, 0xFF) | 0,
-		b: clamp(b, 0, 0xFF) | 0
-	};
+  return {
+    r: clamp(r, 0, 0xFF) | 0,
+    g: clamp(g, 0, 0xFF) | 0,
+    b: clamp(b, 0, 0xFF) | 0
+  };
 }
 
 
@@ -664,10 +664,10 @@ function ct2rgb(ct) {
  * Toggles the light between the on and off states
  */
 function toggle() {
-	'use strict';
-	getStuff(function (res) {
-		doStuff({ on: !res.on });
-	});
+  'use strict';
+  getStuff(function (res) {
+    doStuff({ on: !res.on });
+  });
 }
 
 
@@ -676,19 +676,19 @@ function toggle() {
  * @param hex - The rgb hex colour string, e.g. '#1AF2A9', 0x123456
  */
 function setColour(hex) {
-	'use strict';
-	var hsv = hex2hsv(hex),
-		hexStr = typeof hex === 'string' ?
-				hex :
-				'#' + ('00000' + hex.toString(16)).slice(-6);
+  'use strict';
+  var hsv = hex2hsv(hex),
+    hexStr = typeof hex === 'string' ?
+        hex :
+        '#' + ('00000' + hex.toString(16)).slice(-6);
 
-	doStuff({
-		hue: hsv.h * 0xFFFF | 0,
-		sat: hsv.s * 0xFF | 0,
-		bri: hsv.v * 0xFF | 0
-	});
+  doStuff({
+    hue: hsv.h * 0xFFFF | 0,
+    sat: hsv.s * 0xFF | 0,
+    bri: hsv.v * 0xFF | 0
+  });
 
-	document.body.style.backgroundColor = hexStr;
+  document.body.style.backgroundColor = hexStr;
 }
 
 
@@ -704,15 +704,15 @@ function setColour(hex) {
  *                   element is faded out
  */
 function fadeInAnimation(el, time, callback) {
-	'use strict';
-	el.style.transition = 'opacity ' + time + 'ms';
-	el.style.opacity = 0;
-	setTimeout(function () {
-		if (typeof callback === 'function') {
-			callback();
-		}
-		el.style.opacity = 1;
-	}, time);
+  'use strict';
+  el.style.transition = 'opacity ' + time + 'ms';
+  el.style.opacity = 0;
+  setTimeout(function () {
+    if (typeof callback === 'function') {
+      callback();
+    }
+    el.style.opacity = 1;
+  }, time);
 }
 
 
@@ -721,7 +721,7 @@ function fadeInAnimation(el, time, callback) {
  * @param el - the element to show
  */
 function showElement(el) {
-	el.classList.remove('hidden');
+  el.classList.remove('hidden');
 }
 
 
@@ -730,7 +730,7 @@ function showElement(el) {
  * @param el - the element to hide
  */
 function hideElement(el) {
-	el.classList.add('hidden');
+  el.classList.add('hidden');
 }
 
 
@@ -740,7 +740,7 @@ function hideElement(el) {
  * @returns bool
  */
 function isHidden(el) {
-	return el.classList.contains('hidden');
+  return el.classList.contains('hidden');
 }
 
 
@@ -752,671 +752,671 @@ function isHidden(el) {
  * On page load, draw colour wheel and attach mouse/touch/click events
  */
 function initialiseColourWheel() {
-	'use strict';
-	var toggleInput = document.getElementById('toggle'),
-		colourInput = document.getElementById('colour'),
-		colourWheel = document.getElementById('colour-wheel'),
-		modeInput = document.getElementById('mode'),
-		resetButton = document.getElementById('reset-button'),
-		carousel = document.getElementById('carousel'),
-		carouselSelection = document.getElementById('carousel-selection'),
-		carouselButtons = {
-			wheel: document.getElementById('carousel-colour-wheel'),
-			ct: document.getElementById('carousel-ct'),
-			image: document.getElementById('carousel-image'),
-			gamut: document.getElementById('carousel-gamut'),
-			loop: document.getElementById('carousel-colour-loop')
-		},
-		imageGallery = document.getElementById('image-gallery'),
-		addImageButton = document.getElementById('add-image'),
-		imageGalleryCloseButton = imageGallery.getElementsByClassName('close')[0],
-		imageInput,
-		canvas,
-		ctx,
-		buffer,
-		radius = Math.min(200, window.innerWidth / 2 - 25),
-		W = 2 * radius,
-		H = 2 * radius,
-		i,
-		x,
-		y,
-		r,
-		t,
-		mode = 0,
-		modes = [ 'colour', 'bri' ],
-		gamut = 0,
-		gamuts = [ 'hue-sat', 'temperature', 'image', 'gamut', 'loop' ],
-		currentColour = {
-			h: 0,
-			s: 0,
-			v: 1,
-			hex: 0xFFFFFF,
-			r: 0xFF,
-			g: 0xFF,
-			b: 0xFF,
-			a: 0xFF,
-			ct: 500
-		},
-		mouse = {
-			x: 0,
-			y: 0
-		},
-		intervalHandle,
-		timeInterval = 100,
-		currentImage = new Image();
-
-
-	/*
-	 * Set the colour to the current colour
-	 * @param hex - a 6 digit hex string or number for the colour to set
-	 * @param hsv - optional, an object { h, s, v } containing the hue,
-	 *              saturation and visibility to set
-	 *              Note: for temperature gamut, an object { ct, v } is
-	 *                     expected instead
-	 */
-	function setColour(hex, hsv) {
-		var	hexStr = typeof hex === 'string' ?
-					hex :
-					'#' + ('00000' + hex.toString(16)).slice(-6);
-
-		hsv = hsv || hex2hsv(hex);
-
-		currentColour.h = hsv.h;
-		currentColour.s = hsv.s;
-		currentColour.v = hsv.v;
-
-		// Send the request to the light
-		if (gamuts[gamut] === 'temperature') {
-			// For temperature gamut, the ct value needs to be sent instead
-			doStuff({
-				ct:  hsv.ct,
-				bri: hsv.v * 0xFF | 0
-			});
-		} else {
-			// Otherwise just send the hsv values off
-			doStuff({
-				hue: hsv.h * 0xFFFF | 0,
-				sat: hsv.s * 0xFF   | 0,
-				bri: hsv.v * 0xFF   | 0
-			});
-		}
-
-		document.body.style.backgroundColor = hexStr;
-
-		if (colourInput) {
-			colourInput.value = hexStr;
-		}
-	}
-
-
-	/*
-	 * Update currentColour to the colour of the pixel at the
-	 * mouse position
-	 */
-	function setColourToMousePosition() {
-		// Get the pixel index from mouse x,y
-		var i = 4 * (mouse.y * W + mouse.x),
-			hex,
-			hsv;
-
-		// Ensure pixel under mouse is not transparent
-		if (buffer.data[i + 3] !== 0) {
-			// Get the rgba at the pixel index
-			currentColour.r = buffer.data[i];
-			currentColour.g = buffer.data[i + 1];
-			currentColour.b = buffer.data[i + 2];
-			currentColour.a = buffer.data[i + 3];
-
-			// Convert rgb back to hsv
-			hsv = rgb2hsv(currentColour);
-
-			// Update currentColour hsv for redraws
-			currentColour.h = hsv.h;
-			currentColour.s = hsv.s;
-			currentColour.v = hsv.v;
-
-			// Convert to hex number
-			hex = (currentColour.r << 16) + (currentColour.g << 8) + currentColour.b;
-
-			if (gamuts[gamut] === 'temperature') {
-				// Temperature mode does not send the pixel colour directly.
-				if (modes[mode] === 'colour') {
-					// Instead convert mouse position to colour temperature (range 153-500)
-					currentColour.ct = (1 - (mouse.y / H)) * 347 + 153 | 0;
-				}
-			}
-
-			// Set colour to this hex and hsv
-			setColour(hex, currentColour);
-		}
-
-	}
-
-
-	/*
-	 * Create the canvas, context and drawing buffer
-	 */
-	function createDrawingContext() {
-		// Create a canvas in div#colourWheel
-		canvas = document.createElement('canvas');
-
-		// Set canvas dimensions
-		canvas.width = W;
-		canvas.height = H;
-
-		// Add the canvas to the document
-		colourWheel.appendChild(canvas);
-
-		// Get the 2D context
-		ctx = canvas.getContext('2d');
-
-		// Create a buffer texture the dimensions of the colourwheel
-		buffer = ctx.getImageData(0, 0, W, H);
-	}
-
-
-	/*
-	 * Draw the colour wheel at the current visibility
-	 */
-	function drawColourWheel() {
-		var h, s, v, rgb;
-
-		// For each byte in the buffer
-		for (i = 0; i < buffer.data.length; i += 4) {
-			// Calculate the x,y pixel coordinates
-			x = i / 4 % W | 0;
-			y = i / 4 / W | 0;
-
-			// Convert x,y to radius from centre of the cirlce
-			r = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
-
-			// For certain radii, we can simplify calculations
-			if (r >= radius + 2) {
-				// Outside of the circle, set to transparent
-				buffer.data[i]     = 0;
-				buffer.data[i + 1] = 0;
-				buffer.data[i + 2] = 0;
-				buffer.data[i + 3] = 0;
-			} else {
-				// Calculate the angle from the circle centre to the pixel
-				t = Math.atan2(y - radius, x - radius);
-
-				// Scale angle to range 0-1 to give hue
-				h = t / (2 * Math.PI);
-				if (h < 0) {
-					h += 1;
-				}
-
-				// Scale radius to range 0-1 to give saturation
-				s = r / radius;
-
-				// Visibility
-				v = currentColour.v;
-
-				// Convert hsv format to rgb format
-				rgb = hsv2rgb(h, s, v);
-
-				// Set the pixel in the buffer to the rgb colour
-				buffer.data[i]     = rgb.r;
-				buffer.data[i + 1] = rgb.g;
-				buffer.data[i + 2] = rgb.b;
-				buffer.data[i + 3] = 0xFF;
-			}
-		}
-	}
-
-
-	/*
-	 * Draw a circular brightness slider at the current hue and saturation
-	 */
-	function drawBrightnessSlider() {
-		var h, s, v, rgb;
-
-		for (i = 0; i < buffer.data.length; i += 4) {
-			// Calculate the x,y pixel coordinates
-			x = i / 4 % W | 0;
-			y = i / 4 / W | 0;
-
-			// Convert x,y to radius from centre of the cirlce
-			r = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
-
-			if (r >= radius + 2) {
-				// Outside of the circle, set to transparent
-				buffer.data[i]     = 0;
-				buffer.data[i + 1] = 0;
-				buffer.data[i + 2] = 0;
-				buffer.data[i + 3] = 0;
-			} else {
-				// Adjust the visibility of the current based on height y
-				h = currentColour.h;
-				s = currentColour.s;
-				v = Math.max(1 - (y / H), 0.01);
-
-				// Convert to rbg
-				rgb = hsv2rgb(h, s, v);
-
-				// Adjust the darkness of the colour based on v
-				buffer.data[i]     = rgb.r;
-				buffer.data[i + 1] = rgb.g;
-				buffer.data[i + 2] = rgb.b;
-				buffer.data[i + 3] = 0xFF;
-			}
-		}
-	}
-
-
-	/*
-	 * Draw an approximation of the colour temperature scale
-	 * range 153-500/K
-	 */
-	function drawTemperatureScale() {
-		var i, ct, rgb;
-		for (i = 0; i < buffer.data.length; i += 4) {
-			// Calculate the x,y pixel coordinates
-			x = i / 4 % W | 0;
-			y = i / 4 / W | 0;
-
-			// Convert x,y to radius from centre of the cirlce
-			r = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
-
-			if (r >= radius + 2) {
-				// Outside of the circle, set to transparent
-				buffer.data[i]     = 0;
-				buffer.data[i + 1] = 0;
-				buffer.data[i + 2] = 0;
-				buffer.data[i + 3] = 0;
-			} else {
-				// Adjust the temperature of the current based on height y
-				ct = (y / H) * 5000 + 2000;
-
-				// Convert to rbg
-				rgb = ct2rgb(ct);
-
-				// Adjust the darkness of the colour based on v
-				buffer.data[i]     = rgb.r * currentColour.v | 0;
-				buffer.data[i + 1] = rgb.g * currentColour.v | 0;
-				buffer.data[i + 2] = rgb.b * currentColour.v | 0;
-				buffer.data[i + 3] = 0xFF;
-			}
-		}
-	}
-
-
-	/*
-	 * Draw currentImage to the canvas and updates buffer to match
-	 */
-	function drawImage() {
-		var i;
-
-		// Draw the image
-		ctx.drawImage(currentImage, 0, 0, W, H);
-
-		// Put the image data into the buffer
-		buffer = ctx.getImageData(0, 0, W, H);
-
-		// Adjust brightness
-		/*for (i = 0; i < buffer.data.length; i += 4) {
-			buffer.data[i]     *= currentColour.v;
-			buffer.data[i + 1] *= currentColour.v;
-			buffer.data[i + 2] *= currentColour.v;
-		}*/
-	}
-
-
-	/*
-	 * Render the buffer to the canvas
-	 */
-	function renderBuffer() {
-		ctx.putImageData(buffer, 0, 0);
-	}
-
-
-	/*
-	 * Draw everything depending on which mode is selected
-	 */
-	function draw() {
-		switch (modes[mode]) {
-		case 'colour':
-			switch (gamuts[gamut]) {
-			case 'hue-sat':
-				drawColourWheel();
-				break;
-
-			case 'temperature':
-				drawTemperatureScale();
-				break;
-
-			case 'image':
-				drawImage();
-				break;
-			}
-			break;
-
-		case 'bri':
-			drawBrightnessSlider();
-			break;
-		}
-
-		renderBuffer();
-	}
-
-
-	/*
-	 * Change to the next mode in the modes list
-	 * and re-draw everything
-	 */
-	function changeMode() {
-		mode = (mode + 1) % modes.length;
-		fadeInAnimation(colourWheel, 100, draw);
-	}
-
-
-	/*
-	 * Update the mouse x,y coordinates relative to the canvas using the
-	 * current mouse/touch position
-	 */
-	function updateMousePosition(e) {
-		// On mouse move, update the mouse coordinates relative to the canvas
-		var rect = canvas.getBoundingClientRect();
-		mouse.x = (e.clientX || e.targetTouches[0].pageX) - rect.left | 0;
-		mouse.y = (e.clientY || e.targetTouches[0].pageY) - rect.top  | 0;
-	}
-
-
-	/*
-	 * Called on mousedown or touchstart
-	 * Starts an interval that updates the light to the
-	 * colour of the pixel under the mouse.
-	 */
-	function onDragStart(e) {
-		// On mousedown, immediately update mouse position and set the colour
-		updateMousePosition(e);
-		setColourToMousePosition();
-		// Clear any existing intervals, just in case.
-		clearInterval(intervalHandle);
-		// Also set an interval, allowing dynamic udate for click and drag
-		intervalHandle = setInterval(setColourToMousePosition, timeInterval);
-	}
-
-
-	/*
-	 * On drag, update the mouse position.
-	 * The interval will update the light.
-	 */
-	function onDrag(e) {
-		updateMousePosition(e);
-	}
-
-
-	/*
-	 * On end of drag, stop the interval from updating the light
-	 */
-	function onDragEnd(e) {
-		// On mouseup, mouseout, touchend, end drag
-		clearInterval(intervalHandle);
-	}
-
-
-	/*
-	 * On scroll, change the light's brightness
-	 */
-	function onScroll(e) {
-		// Get the current visibility
-		var v = currentColour.v, hex;
-
-		// Prevent default scrolling behaviour
-		e.preventDefault();
-
-		// Adjust by the mouse wheel event
-		v += e.wheelDelta / 2000;
-
-		// Clamp v between 0.01 and 1
-		v = clamp(v, 0.01, 1);
-
-		// Set current visibility to the new value
-		currentColour.v = v;
-
-		// Redraw with the changes
-		draw();
-
-		// Set colour
-		hex = hsv2hex(currentColour);
-		setColour(hex, currentColour);
-	}
-
-
-	/*
-	 * Update which button in the carousel is shown as currently selected
-	 */
-	function moveCarouselSelectionTo(element) {
-		var siblings = element.parentElement.children,
-			i;
-		// Remove .selected class from all elements
-		for (i = 0; i < siblings.length; i += 1) {
-			siblings[i].classList.remove('selected');
-		}
-		element.classList.add('selected');
-	}
-
-
-	/*
-	 * Hide the image gallery pane
-	 */
-	function hideImageGallery() {
-		if (imageGallery) {
-			hideElement(imageGallery);
-		}
-	}
-
-
-	/*
-	 * Shopw the image gallery pane
-	 */
-	function showImageGallery() {
-		if (imageGallery) {
-			showElement(imageGallery);
-		}
-	}
-
-
-	/*
-	 * Change the gamut to another one and redraw
-	 */
-	function changeGamut(button, gamutIndex) {
-		moveCarouselSelectionTo(button);
-		gamut = gamutIndex;
-		mode = 0;
-
-		if (gamutIndex !== 2) {
-			hideImageGallery();
-		}
-
-		draw();
-	}
-
-
-	/*
-	 * Redraw the colour wheel for the now updated currentColour
-	 * once the connection has been established
-	 * @param e - the CustomEvent object containing detail of
-	 *            the xhr response object from the hue bridge
-	 *            containing the light's states
-	 *            hue, sat, bri, on, ct, etc...
-	 */
-	function onHueConnection(e) {
-		var rgb, hex,
-			res = e.detail;
-
-		// Update currentColour to the lights current state
-		// Set brightness to alteast 2% so colour wheel is visible.
-		currentColour.h = res.hue / 0xFFFF;
-		currentColour.s = res.sat / 0xFF;
-		currentColour.v = Math.max(res.bri / 0xFF, 0.02);
-
-		// Convert to rgb to update the rest of current Colour
-		rgb = hsv2rgb(currentColour);
-
-		currentColour.r = rgb.r;
-		currentColour.g = rgb.g;
-		currentColour.b = rgb.b;
-
-		// Convert to hex to init HTML elements
-		hex = rgb2hex(rgb);
-
-		// Initialise background
-		document.body.style.backgroundColor = hex;
-		if (colourInput) {
-			colourInput.value = hex;
-		}
-
-		// Then draw the colour wheel or the brightness slider
-		// now that current colour has been updated.
-		draw();
-	}
-
-
-	/*
-	 * @param e - the CustomEvent object containing detail of
-	 *            the xhr response object from the hue bridge
-	 *            containing the error description
-	 */
-	function onHueError(e) {
-
-	}
-
-
-	/*** Attach event listeners ***/
-
-	// Attach a function to the on/off button
-	if (toggleInput) {
-		toggleInput.addEventListener('click', toggle);
-	}
-
-	// Attach a function to the native colour input
-	if (colourInput) {
-		colourInput.addEventListener('change', function () {
-			setColour(colourInput.value);
-			draw();
-		});
-	}
-
-	// Attach a function to the mode button
-	if (modeInput) {
-		modeInput.addEventListener('click', changeMode);
-	}
-
-	// Attach a function to the reset button
-	if (resetButton) {
-		resetButton.addEventListener('click', function () {
-			setColour(0xC9FE6E);
-			draw();
-		});
-	}
-
-	// Create a colour wheel to select from
-	if (colourWheel) {
-
-		// Initially setup drawing context and do an initial draw with
-		// the default currentColour since the xhr can take a while.
-		createDrawingContext();
-		draw();
-
-		// Redraw once connected
-		document.addEventListener('hueconnection', onHueConnection, false);
-		document.addEventListener('hueerror',      onHueError,  false);
-
-		// Attach mouse and touch events to the canvas.
-		canvas.addEventListener('mousedown',       onDragStart, false);
-		canvas.addEventListener('mousemove',       onDrag,      false);
-		canvas.addEventListener('mouseup',         onDragEnd,   false);
-		document.body.addEventListener('mouseout', onDragEnd,   false);
-		canvas.addEventListener('touchstart',      onDragStart, false);
-		canvas.addEventListener('touchmove',       onDrag,      false);
-		canvas.addEventListener('touchend',        onDragEnd,   false);
-		canvas.addEventListener('mousewheel',      onScroll,    false);
-		canvas.addEventListener('dblclick',        changeMode,  false);
-	}
-
-
-	if (carouselButtons.wheel) {
-		carouselButtons.wheel.addEventListener('click', function (e) {
-			changeGamut(e.target, 0);
-		}, false);
-	}
-
-	if (carouselButtons.ct) {
-		carouselButtons.ct.addEventListener('click', function (e) {
-			changeGamut(e.target, 1);
-		}, false);
-	}
-
-	if (carouselButtons.image) {
-		carouselButtons.image.addEventListener('click', function (e) {
-			showImageGallery();
-			changeGamut(e.target, 2);
-		}, false);
-
-		if (imageGalleryCloseButton) {
-			imageGalleryCloseButton.addEventListener('click', function (e) {
-				hideImageGallery();
-			});
-		}
-
-		if (canvas && imageGallery) {
-			// Hide the image gallery when interacting with the colourwheel
-			canvas.addEventListener('mousedown',  hideImageGallery, false);
-			canvas.addEventListener('touchstart', hideImageGallery, false);
-		}
-	}
-
-	if (addImageButton) {
-		addImageButton.addEventListener('click', function (e) {
-			currentImage = new Image();
-
-			currentImage.onload = function () {
-				// Add the image to the gallery
-				if (imageGallery && imageGallery.children[0]) {
-					imageGallery.children[0].appendChild(currentImage);
-
-					// Clicking the image draws it
-					currentImage.addEventListener('click', function (e) {
-						currentImage = e.target;
-						mode = 0;
-						draw();
-					}, false);
-				}
-
-				// Change gamut and redraw
-				changeGamut(e.target, 2);
-			};
-
-			// Load custom image
-			if (imageInput === undefined) {
-				imageInput = document.createElement('input');
-				imageInput.setAttribute('type', 'file');
-				imageInput.setAttribute('accept', 'image/*');
-
-				imageInput.onchange = function (e) {
-					currentImage.src = window.URL.createObjectURL(e.path[0].files[0]);
-				};
-			}
-
-			imageInput.click();
-
-		}, false);
-	}
-
-	if (carouselButtons.gamut) {
-		carouselButtons.gamut.addEventListener('click', function (e) {
-			changeGamut(e.target, 3);
-		}, false);
-	}
-
-	if (carouselButtons.loop) {
-		carouselButtons.loop.addEventListener('click', function (e) {
-			changeGamut(e.target, 4);
-		}, false);
-	}
+  'use strict';
+  var toggleInput = document.getElementById('toggle'),
+    colourInput = document.getElementById('colour'),
+    colourWheel = document.getElementById('colour-wheel'),
+    modeInput = document.getElementById('mode'),
+    resetButton = document.getElementById('reset-button'),
+    carousel = document.getElementById('carousel'),
+    carouselSelection = document.getElementById('carousel-selection'),
+    carouselButtons = {
+      wheel: document.getElementById('carousel-colour-wheel'),
+      ct: document.getElementById('carousel-ct'),
+      image: document.getElementById('carousel-image'),
+      gamut: document.getElementById('carousel-gamut'),
+      loop: document.getElementById('carousel-colour-loop')
+    },
+    imageGallery = document.getElementById('image-gallery'),
+    addImageButton = document.getElementById('add-image'),
+    imageGalleryCloseButton = imageGallery.getElementsByClassName('close')[0],
+    imageInput,
+    canvas,
+    ctx,
+    buffer,
+    radius = Math.min(200, window.innerWidth / 2 - 25),
+    W = 2 * radius,
+    H = 2 * radius,
+    i,
+    x,
+    y,
+    r,
+    t,
+    mode = 0,
+    modes = [ 'colour', 'bri' ],
+    gamut = 0,
+    gamuts = [ 'hue-sat', 'temperature', 'image', 'gamut', 'loop' ],
+    currentColour = {
+      h: 0,
+      s: 0,
+      v: 1,
+      hex: 0xFFFFFF,
+      r: 0xFF,
+      g: 0xFF,
+      b: 0xFF,
+      a: 0xFF,
+      ct: 500
+    },
+    mouse = {
+      x: 0,
+      y: 0
+    },
+    intervalHandle,
+    timeInterval = 100,
+    currentImage = new Image();
+
+
+  /*
+   * Set the colour to the current colour
+   * @param hex - a 6 digit hex string or number for the colour to set
+   * @param hsv - optional, an object { h, s, v } containing the hue,
+   *              saturation and visibility to set
+   *              Note: for temperature gamut, an object { ct, v } is
+   *                     expected instead
+   */
+  function setColour(hex, hsv) {
+    var	hexStr = typeof hex === 'string' ?
+          hex :
+          '#' + ('00000' + hex.toString(16)).slice(-6);
+
+    hsv = hsv || hex2hsv(hex);
+
+    currentColour.h = hsv.h;
+    currentColour.s = hsv.s;
+    currentColour.v = hsv.v;
+
+    // Send the request to the light
+    if (gamuts[gamut] === 'temperature') {
+      // For temperature gamut, the ct value needs to be sent instead
+      doStuff({
+        ct:  hsv.ct,
+        bri: hsv.v * 0xFF | 0
+      });
+    } else {
+      // Otherwise just send the hsv values off
+      doStuff({
+        hue: hsv.h * 0xFFFF | 0,
+        sat: hsv.s * 0xFF   | 0,
+        bri: hsv.v * 0xFF   | 0
+      });
+    }
+
+    document.body.style.backgroundColor = hexStr;
+
+    if (colourInput) {
+      colourInput.value = hexStr;
+    }
+  }
+
+
+  /*
+   * Update currentColour to the colour of the pixel at the
+   * mouse position
+   */
+  function setColourToMousePosition() {
+    // Get the pixel index from mouse x,y
+    var i = 4 * (mouse.y * W + mouse.x),
+      hex,
+      hsv;
+
+    // Ensure pixel under mouse is not transparent
+    if (buffer.data[i + 3] !== 0) {
+      // Get the rgba at the pixel index
+      currentColour.r = buffer.data[i];
+      currentColour.g = buffer.data[i + 1];
+      currentColour.b = buffer.data[i + 2];
+      currentColour.a = buffer.data[i + 3];
+
+      // Convert rgb back to hsv
+      hsv = rgb2hsv(currentColour);
+
+      // Update currentColour hsv for redraws
+      currentColour.h = hsv.h;
+      currentColour.s = hsv.s;
+      currentColour.v = hsv.v;
+
+      // Convert to hex number
+      hex = (currentColour.r << 16) + (currentColour.g << 8) + currentColour.b;
+
+      if (gamuts[gamut] === 'temperature') {
+        // Temperature mode does not send the pixel colour directly.
+        if (modes[mode] === 'colour') {
+          // Instead convert mouse position to colour temperature (range 153-500)
+          currentColour.ct = (1 - (mouse.y / H)) * 347 + 153 | 0;
+        }
+      }
+
+      // Set colour to this hex and hsv
+      setColour(hex, currentColour);
+    }
+
+  }
+
+
+  /*
+   * Create the canvas, context and drawing buffer
+   */
+  function createDrawingContext() {
+    // Create a canvas in div#colourWheel
+    canvas = document.createElement('canvas');
+
+    // Set canvas dimensions
+    canvas.width = W;
+    canvas.height = H;
+
+    // Add the canvas to the document
+    colourWheel.appendChild(canvas);
+
+    // Get the 2D context
+    ctx = canvas.getContext('2d');
+
+    // Create a buffer texture the dimensions of the colourwheel
+    buffer = ctx.getImageData(0, 0, W, H);
+  }
+
+
+  /*
+   * Draw the colour wheel at the current visibility
+   */
+  function drawColourWheel() {
+    var h, s, v, rgb;
+
+    // For each byte in the buffer
+    for (i = 0; i < buffer.data.length; i += 4) {
+      // Calculate the x,y pixel coordinates
+      x = i / 4 % W | 0;
+      y = i / 4 / W | 0;
+
+      // Convert x,y to radius from centre of the cirlce
+      r = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
+
+      // For certain radii, we can simplify calculations
+      if (r >= radius + 2) {
+        // Outside of the circle, set to transparent
+        buffer.data[i]     = 0;
+        buffer.data[i + 1] = 0;
+        buffer.data[i + 2] = 0;
+        buffer.data[i + 3] = 0;
+      } else {
+        // Calculate the angle from the circle centre to the pixel
+        t = Math.atan2(y - radius, x - radius);
+
+        // Scale angle to range 0-1 to give hue
+        h = t / (2 * Math.PI);
+        if (h < 0) {
+          h += 1;
+        }
+
+        // Scale radius to range 0-1 to give saturation
+        s = r / radius;
+
+        // Visibility
+        v = currentColour.v;
+
+        // Convert hsv format to rgb format
+        rgb = hsv2rgb(h, s, v);
+
+        // Set the pixel in the buffer to the rgb colour
+        buffer.data[i]     = rgb.r;
+        buffer.data[i + 1] = rgb.g;
+        buffer.data[i + 2] = rgb.b;
+        buffer.data[i + 3] = 0xFF;
+      }
+    }
+  }
+
+
+  /*
+   * Draw a circular brightness slider at the current hue and saturation
+   */
+  function drawBrightnessSlider() {
+    var h, s, v, rgb;
+
+    for (i = 0; i < buffer.data.length; i += 4) {
+      // Calculate the x,y pixel coordinates
+      x = i / 4 % W | 0;
+      y = i / 4 / W | 0;
+
+      // Convert x,y to radius from centre of the cirlce
+      r = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
+
+      if (r >= radius + 2) {
+        // Outside of the circle, set to transparent
+        buffer.data[i]     = 0;
+        buffer.data[i + 1] = 0;
+        buffer.data[i + 2] = 0;
+        buffer.data[i + 3] = 0;
+      } else {
+        // Adjust the visibility of the current based on height y
+        h = currentColour.h;
+        s = currentColour.s;
+        v = Math.max(1 - (y / H), 0.01);
+
+        // Convert to rbg
+        rgb = hsv2rgb(h, s, v);
+
+        // Adjust the darkness of the colour based on v
+        buffer.data[i]     = rgb.r;
+        buffer.data[i + 1] = rgb.g;
+        buffer.data[i + 2] = rgb.b;
+        buffer.data[i + 3] = 0xFF;
+      }
+    }
+  }
+
+
+  /*
+   * Draw an approximation of the colour temperature scale
+   * range 153-500/K
+   */
+  function drawTemperatureScale() {
+    var i, ct, rgb;
+    for (i = 0; i < buffer.data.length; i += 4) {
+      // Calculate the x,y pixel coordinates
+      x = i / 4 % W | 0;
+      y = i / 4 / W | 0;
+
+      // Convert x,y to radius from centre of the cirlce
+      r = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
+
+      if (r >= radius + 2) {
+        // Outside of the circle, set to transparent
+        buffer.data[i]     = 0;
+        buffer.data[i + 1] = 0;
+        buffer.data[i + 2] = 0;
+        buffer.data[i + 3] = 0;
+      } else {
+        // Adjust the temperature of the current based on height y
+        ct = (y / H) * 5000 + 2000;
+
+        // Convert to rbg
+        rgb = ct2rgb(ct);
+
+        // Adjust the darkness of the colour based on v
+        buffer.data[i]     = rgb.r * currentColour.v | 0;
+        buffer.data[i + 1] = rgb.g * currentColour.v | 0;
+        buffer.data[i + 2] = rgb.b * currentColour.v | 0;
+        buffer.data[i + 3] = 0xFF;
+      }
+    }
+  }
+
+
+  /*
+   * Draw currentImage to the canvas and updates buffer to match
+   */
+  function drawImage() {
+    var i;
+
+    // Draw the image
+    ctx.drawImage(currentImage, 0, 0, W, H);
+
+    // Put the image data into the buffer
+    buffer = ctx.getImageData(0, 0, W, H);
+
+    // Adjust brightness
+    /*for (i = 0; i < buffer.data.length; i += 4) {
+      buffer.data[i]     *= currentColour.v;
+      buffer.data[i + 1] *= currentColour.v;
+      buffer.data[i + 2] *= currentColour.v;
+    }*/
+  }
+
+
+  /*
+   * Render the buffer to the canvas
+   */
+  function renderBuffer() {
+    ctx.putImageData(buffer, 0, 0);
+  }
+
+
+  /*
+   * Draw everything depending on which mode is selected
+   */
+  function draw() {
+    switch (modes[mode]) {
+    case 'colour':
+      switch (gamuts[gamut]) {
+      case 'hue-sat':
+        drawColourWheel();
+        break;
+
+      case 'temperature':
+        drawTemperatureScale();
+        break;
+
+      case 'image':
+        drawImage();
+        break;
+      }
+      break;
+
+    case 'bri':
+      drawBrightnessSlider();
+      break;
+    }
+
+    renderBuffer();
+  }
+
+
+  /*
+   * Change to the next mode in the modes list
+   * and re-draw everything
+   */
+  function changeMode() {
+    mode = (mode + 1) % modes.length;
+    fadeInAnimation(colourWheel, 100, draw);
+  }
+
+
+  /*
+   * Update the mouse x,y coordinates relative to the canvas using the
+   * current mouse/touch position
+   */
+  function updateMousePosition(e) {
+    // On mouse move, update the mouse coordinates relative to the canvas
+    var rect = canvas.getBoundingClientRect();
+    mouse.x = (e.clientX || e.targetTouches[0].pageX) - rect.left | 0;
+    mouse.y = (e.clientY || e.targetTouches[0].pageY) - rect.top  | 0;
+  }
+
+
+  /*
+   * Called on mousedown or touchstart
+   * Starts an interval that updates the light to the
+   * colour of the pixel under the mouse.
+   */
+  function onDragStart(e) {
+    // On mousedown, immediately update mouse position and set the colour
+    updateMousePosition(e);
+    setColourToMousePosition();
+    // Clear any existing intervals, just in case.
+    clearInterval(intervalHandle);
+    // Also set an interval, allowing dynamic udate for click and drag
+    intervalHandle = setInterval(setColourToMousePosition, timeInterval);
+  }
+
+
+  /*
+   * On drag, update the mouse position.
+   * The interval will update the light.
+   */
+  function onDrag(e) {
+    updateMousePosition(e);
+  }
+
+
+  /*
+   * On end of drag, stop the interval from updating the light
+   */
+  function onDragEnd(e) {
+    // On mouseup, mouseout, touchend, end drag
+    clearInterval(intervalHandle);
+  }
+
+
+  /*
+   * On scroll, change the light's brightness
+   */
+  function onScroll(e) {
+    // Get the current visibility
+    var v = currentColour.v, hex;
+
+    // Prevent default scrolling behaviour
+    e.preventDefault();
+
+    // Adjust by the mouse wheel event
+    v += e.wheelDelta / 2000;
+
+    // Clamp v between 0.01 and 1
+    v = clamp(v, 0.01, 1);
+
+    // Set current visibility to the new value
+    currentColour.v = v;
+
+    // Redraw with the changes
+    draw();
+
+    // Set colour
+    hex = hsv2hex(currentColour);
+    setColour(hex, currentColour);
+  }
+
+
+  /*
+   * Update which button in the carousel is shown as currently selected
+   */
+  function moveCarouselSelectionTo(element) {
+    var siblings = element.parentElement.children,
+      i;
+    // Remove .selected class from all elements
+    for (i = 0; i < siblings.length; i += 1) {
+      siblings[i].classList.remove('selected');
+    }
+    element.classList.add('selected');
+  }
+
+
+  /*
+   * Hide the image gallery pane
+   */
+  function hideImageGallery() {
+    if (imageGallery) {
+      hideElement(imageGallery);
+    }
+  }
+
+
+  /*
+   * Shopw the image gallery pane
+   */
+  function showImageGallery() {
+    if (imageGallery) {
+      showElement(imageGallery);
+    }
+  }
+
+
+  /*
+   * Change the gamut to another one and redraw
+   */
+  function changeGamut(button, gamutIndex) {
+    moveCarouselSelectionTo(button);
+    gamut = gamutIndex;
+    mode = 0;
+
+    if (gamutIndex !== 2) {
+      hideImageGallery();
+    }
+
+    draw();
+  }
+
+
+  /*
+   * Redraw the colour wheel for the now updated currentColour
+   * once the connection has been established
+   * @param e - the CustomEvent object containing detail of
+   *            the xhr response object from the hue bridge
+   *            containing the light's states
+   *            hue, sat, bri, on, ct, etc...
+   */
+  function onHueConnection(e) {
+    var rgb, hex,
+      res = e.detail;
+
+    // Update currentColour to the lights current state
+    // Set brightness to alteast 2% so colour wheel is visible.
+    currentColour.h = res.hue / 0xFFFF;
+    currentColour.s = res.sat / 0xFF;
+    currentColour.v = Math.max(res.bri / 0xFF, 0.02);
+
+    // Convert to rgb to update the rest of current Colour
+    rgb = hsv2rgb(currentColour);
+
+    currentColour.r = rgb.r;
+    currentColour.g = rgb.g;
+    currentColour.b = rgb.b;
+
+    // Convert to hex to init HTML elements
+    hex = rgb2hex(rgb);
+
+    // Initialise background
+    document.body.style.backgroundColor = hex;
+    if (colourInput) {
+      colourInput.value = hex;
+    }
+
+    // Then draw the colour wheel or the brightness slider
+    // now that current colour has been updated.
+    draw();
+  }
+
+
+  /*
+   * @param e - the CustomEvent object containing detail of
+   *            the xhr response object from the hue bridge
+   *            containing the error description
+   */
+  function onHueError(e) {
+
+  }
+
+
+  /*** Attach event listeners ***/
+
+  // Attach a function to the on/off button
+  if (toggleInput) {
+    toggleInput.addEventListener('click', toggle);
+  }
+
+  // Attach a function to the native colour input
+  if (colourInput) {
+    colourInput.addEventListener('change', function () {
+      setColour(colourInput.value);
+      draw();
+    });
+  }
+
+  // Attach a function to the mode button
+  if (modeInput) {
+    modeInput.addEventListener('click', changeMode);
+  }
+
+  // Attach a function to the reset button
+  if (resetButton) {
+    resetButton.addEventListener('click', function () {
+      setColour(0xC9FE6E);
+      draw();
+    });
+  }
+
+  // Create a colour wheel to select from
+  if (colourWheel) {
+
+    // Initially setup drawing context and do an initial draw with
+    // the default currentColour since the xhr can take a while.
+    createDrawingContext();
+    draw();
+
+    // Redraw once connected
+    document.addEventListener('hueconnection', onHueConnection, false);
+    document.addEventListener('hueerror',      onHueError,  false);
+
+    // Attach mouse and touch events to the canvas.
+    canvas.addEventListener('mousedown',       onDragStart, false);
+    canvas.addEventListener('mousemove',       onDrag,      false);
+    canvas.addEventListener('mouseup',         onDragEnd,   false);
+    document.body.addEventListener('mouseout', onDragEnd,   false);
+    canvas.addEventListener('touchstart',      onDragStart, false);
+    canvas.addEventListener('touchmove',       onDrag,      false);
+    canvas.addEventListener('touchend',        onDragEnd,   false);
+    canvas.addEventListener('mousewheel',      onScroll,    false);
+    canvas.addEventListener('dblclick',        changeMode,  false);
+  }
+
+
+  if (carouselButtons.wheel) {
+    carouselButtons.wheel.addEventListener('click', function (e) {
+      changeGamut(e.target, 0);
+    }, false);
+  }
+
+  if (carouselButtons.ct) {
+    carouselButtons.ct.addEventListener('click', function (e) {
+      changeGamut(e.target, 1);
+    }, false);
+  }
+
+  if (carouselButtons.image) {
+    carouselButtons.image.addEventListener('click', function (e) {
+      showImageGallery();
+      changeGamut(e.target, 2);
+    }, false);
+
+    if (imageGalleryCloseButton) {
+      imageGalleryCloseButton.addEventListener('click', function (e) {
+        hideImageGallery();
+      });
+    }
+
+    if (canvas && imageGallery) {
+      // Hide the image gallery when interacting with the colourwheel
+      canvas.addEventListener('mousedown',  hideImageGallery, false);
+      canvas.addEventListener('touchstart', hideImageGallery, false);
+    }
+  }
+
+  if (addImageButton) {
+    addImageButton.addEventListener('click', function (e) {
+      currentImage = new Image();
+
+      currentImage.onload = function () {
+        // Add the image to the gallery
+        if (imageGallery && imageGallery.children[0]) {
+          imageGallery.children[0].appendChild(currentImage);
+
+          // Clicking the image draws it
+          currentImage.addEventListener('click', function (e) {
+            currentImage = e.target;
+            mode = 0;
+            draw();
+          }, false);
+        }
+
+        // Change gamut and redraw
+        changeGamut(e.target, 2);
+      };
+
+      // Load custom image
+      if (imageInput === undefined) {
+        imageInput = document.createElement('input');
+        imageInput.setAttribute('type', 'file');
+        imageInput.setAttribute('accept', 'image/*');
+
+        imageInput.onchange = function (e) {
+          currentImage.src = window.URL.createObjectURL(e.path[0].files[0]);
+        };
+      }
+
+      imageInput.click();
+
+    }, false);
+  }
+
+  if (carouselButtons.gamut) {
+    carouselButtons.gamut.addEventListener('click', function (e) {
+      changeGamut(e.target, 3);
+    }, false);
+  }
+
+  if (carouselButtons.loop) {
+    carouselButtons.loop.addEventListener('click', function (e) {
+      changeGamut(e.target, 4);
+    }, false);
+  }
 }
 
 
@@ -1430,343 +1430,343 @@ function initialiseColourWheel() {
  * can be queued up in a table.
  */
 function initialiseAnimationsPane() {
-	'use strict';
-	var anim = document.getElementById('anim'),
-		animTable = document.getElementById('anim-table'),
-		animTbody = anim.getElementsByTagName('tbody')[0],
-		toggleAnimButton = document.getElementById('show-anim'),
-		addFrameButton = document.getElementById('add-frame'),
-		paramSelect = anim.getElementsByClassName('param')[0],
-		valueInput = anim.getElementsByClassName('val')[0],
-		deleteRowButton = anim.getElementsByClassName('delete-row')[0],
-		animCloseButton = anim.getElementsByClassName('close')[0],
-		animPlayButton = document.getElementById('play-animation'),
-		animStopButton = document.getElementById('stop-animation'),
-		animTimeoutHandle,
-		animPlayFlag = true,
-		frameIndicator = document.getElementById('frame-indicator'),
-		loop = document.getElementById('loop-anim'),
-		toggles = document.getElementsByClassName('toggle'),
-		i,
-		currentColour = {
-			hsv: {
-				h: 0,
-				s: 0,
-				v: 1
-			},
-			on: true
-		};
+  'use strict';
+  var anim = document.getElementById('anim'),
+    animTable = document.getElementById('anim-table'),
+    animTbody = anim.getElementsByTagName('tbody')[0],
+    toggleAnimButton = document.getElementById('show-anim'),
+    addFrameButton = document.getElementById('add-frame'),
+    paramSelect = anim.getElementsByClassName('param')[0],
+    valueInput = anim.getElementsByClassName('val')[0],
+    deleteRowButton = anim.getElementsByClassName('delete-row')[0],
+    animCloseButton = anim.getElementsByClassName('close')[0],
+    animPlayButton = document.getElementById('play-animation'),
+    animStopButton = document.getElementById('stop-animation'),
+    animTimeoutHandle,
+    animPlayFlag = true,
+    frameIndicator = document.getElementById('frame-indicator'),
+    loop = document.getElementById('loop-anim'),
+    toggles = document.getElementsByClassName('toggle'),
+    i,
+    currentColour = {
+      hsv: {
+        h: 0,
+        s: 0,
+        v: 1
+      },
+      on: true
+    };
 
 
-	/*
-	 * Handler for when the param dropdown changes.
-	 * Displays the correct value input type.
-	 */
-	function paramChange(e) {
-		var row = e.target.parentElement.parentElement,
-			valTd = row.getElementsByClassName('val-td')[0],
-			valInputs = valTd.getElementsByTagName('input'),
-			i;
+  /*
+   * Handler for when the param dropdown changes.
+   * Displays the correct value input type.
+   */
+  function paramChange(e) {
+    var row = e.target.parentElement.parentElement,
+      valTd = row.getElementsByClassName('val-td')[0],
+      valInputs = valTd.getElementsByTagName('input'),
+      i;
 
-		// Hide all inputs in valTd
-		for (i = 0; i < valInputs.length; i += 1) {
-			hideElement(valInputs[i]);
-		}
+    // Hide all inputs in valTd
+    for (i = 0; i < valInputs.length; i += 1) {
+      hideElement(valInputs[i]);
+    }
 
-		// Then show the correct one
-		switch (e.target.value) {
-		case 'Colour':
-			// Show color input
-			showElement(valInputs[0]);
-			break;
+    // Then show the correct one
+    switch (e.target.value) {
+    case 'Colour':
+      // Show color input
+      showElement(valInputs[0]);
+      break;
 
-		case 'On/Off':
-			// Show checkbox input
-			showElement(valInputs[1]);
-			break;
+    case 'On/Off':
+      // Show checkbox input
+      showElement(valInputs[1]);
+      break;
 
-		case 'Hue':
-		case 'Saturation':
-		case 'Brightness':
-		case 'Temperature':
-			// Show number input
-			showElement(valInputs[2]);
-			break;
-		}
-	}
-
-
-	/*
-	 * Delete the clicked on row
-	 */
-	function deleteRow(e) {
-		var row = e.target.parentElement.parentElement;
-		row.parentElement.removeChild(row);
-	}
+    case 'Hue':
+    case 'Saturation':
+    case 'Brightness':
+    case 'Temperature':
+      // Show number input
+      showElement(valInputs[2]);
+      break;
+    }
+  }
 
 
-	/*
-	 * Sets the frame indicator symbol to on or off depending on whether the
-	 * light is on or off
-	 */
-	function setFrameIndicatorSymbol() {
-		frameIndicator.innerHTML = currentColour.on ? 'play_arrow' : 'clear';
-	}
+  /*
+   * Delete the clicked on row
+   */
+  function deleteRow(e) {
+    var row = e.target.parentElement.parentElement;
+    row.parentElement.removeChild(row);
+  }
 
 
-	/*
-	 * Move the frame indicator next to a given row
-	 */
-	function moveFrameIndicator(row) {
-		// Get position of row relative to the animations pane
-		// and define an offset for where the indicator is to
-		// be positioned
-		var animRect = anim.getBoundingClientRect(),
-			rowRect  =  row.getBoundingClientRect(),
-			rowX = rowRect.left - animRect.left,
-			rowY = rowRect.top  - animRect.top,
-			offsetX = -14,
-			offsetY = 1;
-
-		// Set the absolute position of the indicator
-		frameIndicator.style.left = (rowX + offsetX) + 'px';
-		frameIndicator.style.top  = (rowY + offsetY) + 'px';
-
-		// Update colour to match light
-		frameIndicator.style.color = hsv2hex(currentColour.hsv);
-	}
-
-	/*
-	 * Run one row of the animation table
-	 * @param index - the index of the row to run
-	 *                Note: index 0 is the headings row and should not be run
-	 *                      index 1 is the 1st row that can be run
-	 */
-	function runAnimation(index) {
-		if (index > 0 && index < animTable.rows.length - 1) {
-			// Get the row at the index
-			var row = animTable.rows[index],
-				param = row.cells[0].getElementsByClassName('param')[0].value,
-				valueInputs = row.cells[1].getElementsByClassName('val'),
-				time  = parseFloat(row.cells[2].getElementsByClassName('time')[0].value, 10) * 1000,
-				hsv;
-
-			// Only make make changes if the light is on, or is about to be turned on
-			if (currentColour.on || param === 'On/Off') {
-				switch (param) {
-				case 'Colour':
-					currentColour.hsv = hex2hsv(valueInputs[0].value);
-					doStuff({
-						hue: currentColour.hsv.h * 0xFFFF | 0,
-						sat: currentColour.hsv.s * 0xFF   | 0,
-						bri: currentColour.hsv.v * 0xFF   | 0
-					});
-					break;
-
-				case 'Hue':
-					currentColour.hsv.h = parseFloat(valueInputs[2].value);
-					doStuff({
-						hue: currentColour.hsv.h * 0xFFFF | 0
-					});
-					break;
-
-				case 'Saturation':
-					currentColour.hsv.s = parseFloat(valueInputs[2].value);
-					doStuff({
-						sat: currentColour.hsv.s * 0xFF | 0
-					});
-					break;
-
-				case 'Brightness':
-					currentColour.hsv.v = parseFloat(valueInputs[2].value);
-					doStuff({
-						bri: currentColour.hsv.v * 0xFF | 0
-					});
-					break;
-
-				case 'Temperature':
-					doStuff({
-						ct: parseFloat(valueInputs[2].value) * 347 + 153 | 0
-					});
-					break;
-
-				case 'Random':
-					currentColour.hsv = {
-						h: Math.random(),
-						s: Math.random(),
-						v: Math.random()
-					};
-					doStuff({
-						hue: currentColour.hsv.h * 0xFFFF | 0,
-						sat: currentColour.hsv.s * 0xFF   | 0,
-						bri: currentColour.hsv.v * 0xFF   | 0
-					});
-					break;
-
-				case 'On/Off':
-					currentColour.on = valueInputs[1].checked;
-					doStuff({
-						on: currentColour.on
-					});
-					setFrameIndicatorSymbol();
-					break;
-				}
-			}
-
-			// Move the frame indicator arrow
-			moveFrameIndicator(row);
-
-			// Only run the next animation frame if the flag is true
-			if (animPlayFlag) {
-				// Run the next animation after a timeout
-				animTimeoutHandle = setTimeout(function () {
-					runAnimation(index + 1);
-				}, time);
-			}
-
-		} else {
-			// We have reached the row where the loop button is
-			if (loop.classList.contains('checked')) {
-				// Go back to the start if loop is checked immediately
-				runAnimation(1);
-			}
-		}
-
-	}
+  /*
+   * Sets the frame indicator symbol to on or off depending on whether the
+   * light is on or off
+   */
+  function setFrameIndicatorSymbol() {
+    frameIndicator.innerHTML = currentColour.on ? 'play_arrow' : 'clear';
+  }
 
 
-	/*
-	 * Start playing animations, starting from row 1 of the animation table
-	 */
-	function startAnimation() {
-		// Clear any pre-existing animations, just in case
-		clearTimeout(animTimeoutHandle);
+  /*
+   * Move the frame indicator next to a given row
+   */
+  function moveFrameIndicator(row) {
+    // Get position of row relative to the animations pane
+    // and define an offset for where the indicator is to
+    // be positioned
+    var animRect = anim.getBoundingClientRect(),
+      rowRect  =  row.getBoundingClientRect(),
+      rowX = rowRect.left - animRect.left,
+      rowY = rowRect.top  - animRect.top,
+      offsetX = -14,
+      offsetY = 1;
 
-		// Reset play flag to true
-		animPlayFlag = true;
+    // Set the absolute position of the indicator
+    frameIndicator.style.left = (rowX + offsetX) + 'px';
+    frameIndicator.style.top  = (rowY + offsetY) + 'px';
 
-		// Add .playing class to #anim
-		anim.classList.add('playing');
+    // Update colour to match light
+    frameIndicator.style.color = hsv2hex(currentColour.hsv);
+  }
 
-		// Ensure current colour is up to date
-		getStuff(function (res) {
-			currentColour = {
-				hsv: {
-					h: res.hue / 0xFFFF,
-					s: res.sat / 0xFF,
-					v: res.bri / 0xFF
-				},
-				on: res.on
-			};
+  /*
+   * Run one row of the animation table
+   * @param index - the index of the row to run
+   *                Note: index 0 is the headings row and should not be run
+   *                      index 1 is the 1st row that can be run
+   */
+  function runAnimation(index) {
+    if (index > 0 && index < animTable.rows.length - 1) {
+      // Get the row at the index
+      var row = animTable.rows[index],
+        param = row.cells[0].getElementsByClassName('param')[0].value,
+        valueInputs = row.cells[1].getElementsByClassName('val'),
+        time  = parseFloat(row.cells[2].getElementsByClassName('time')[0].value, 10) * 1000,
+        hsv;
 
-			setFrameIndicatorSymbol();
+      // Only make make changes if the light is on, or is about to be turned on
+      if (currentColour.on || param === 'On/Off') {
+        switch (param) {
+        case 'Colour':
+          currentColour.hsv = hex2hsv(valueInputs[0].value);
+          doStuff({
+            hue: currentColour.hsv.h * 0xFFFF | 0,
+            sat: currentColour.hsv.s * 0xFF   | 0,
+            bri: currentColour.hsv.v * 0xFF   | 0
+          });
+          break;
 
-			// Start animations from the top
-			runAnimation(1);
-		}, function (err) {
-			// An error occurred so lights may not respond
-			window.alert('An error occurred when getting data from the Hue Bridge:\n' + err.description);
+        case 'Hue':
+          currentColour.hsv.h = parseFloat(valueInputs[2].value);
+          doStuff({
+            hue: currentColour.hsv.h * 0xFFFF | 0
+          });
+          break;
 
-			// Play animations anyway but with current colour set to off
-			currentColour.on = false;
-			setFrameIndicatorSymbol();
-			runAnimation(1);
-		});
+        case 'Saturation':
+          currentColour.hsv.s = parseFloat(valueInputs[2].value);
+          doStuff({
+            sat: currentColour.hsv.s * 0xFF | 0
+          });
+          break;
 
-		// Hide play button and show stop button
-		hideElement(animPlayButton);
-		showElement(animStopButton);
-	}
+        case 'Brightness':
+          currentColour.hsv.v = parseFloat(valueInputs[2].value);
+          doStuff({
+            bri: currentColour.hsv.v * 0xFF | 0
+          });
+          break;
 
+        case 'Temperature':
+          doStuff({
+            ct: parseFloat(valueInputs[2].value) * 347 + 153 | 0
+          });
+          break;
 
-	/*
-	 * Stop playing animations
-	 */
-	function stopAnimation() {
-		// Raise stop flag
-		animPlayFlag = false;
+        case 'Random':
+          currentColour.hsv = {
+            h: Math.random(),
+            s: Math.random(),
+            v: Math.random()
+          };
+          doStuff({
+            hue: currentColour.hsv.h * 0xFFFF | 0,
+            sat: currentColour.hsv.s * 0xFF   | 0,
+            bri: currentColour.hsv.v * 0xFF   | 0
+          });
+          break;
 
-		// Remove .playing class from #anim
-		anim.classList.remove('playing');
+        case 'On/Off':
+          currentColour.on = valueInputs[1].checked;
+          doStuff({
+            on: currentColour.on
+          });
+          setFrameIndicatorSymbol();
+          break;
+        }
+      }
 
-		// Stop the currently running animation
-		clearTimeout(animTimeoutHandle);
+      // Move the frame indicator arrow
+      moveFrameIndicator(row);
 
-		// Show play button and hide stop button
-		showElement(animPlayButton);
-		hideElement(animStopButton);
-	}
+      // Only run the next animation frame if the flag is true
+      if (animPlayFlag) {
+        // Run the next animation after a timeout
+        animTimeoutHandle = setTimeout(function () {
+          runAnimation(index + 1);
+        }, time);
+      }
 
+    } else {
+      // We have reached the row where the loop button is
+      if (loop.classList.contains('checked')) {
+        // Go back to the start if loop is checked immediately
+        runAnimation(1);
+      }
+    }
 
-	/*
-	 * Add an animation frame row to the table
-	 * The last animation frame is cloned and inserted
-	 */
-	function addFrame() {
-		// Duplicate the penultimate row in the table
-		var index = animTable.rows.length - 2,
-			oldRow = animTable.rows[index],
-			newRow = oldRow.cloneNode(true),
-			lastRow = animTable.rows[index + 1];
-
-		// Add event listeners
-		newRow.getElementsByClassName('delete-row')[0]
-			.addEventListener('click', deleteRow, false);
-		newRow.getElementsByClassName('param')[0]
-			.addEventListener('change', paramChange);
-
-		// Match parameter select
-		newRow.getElementsByClassName('param')[0].value =
-			oldRow.getElementsByClassName('param')[0].value;
-
-		// Insert into table
-		animTbody.insertBefore(newRow, lastRow);
-	}
-
-	function showAnimationPane() {
-		showElement(anim);
-	}
-
-	function closeAnimationPane() {
-		hideElement(anim);
-		stopAnimation();
-	}
-
-	function toggleAnimationPane() {
-		if (isHidden(anim)) {
-			showAnimationPane();
-		} else {
-			closeAnimationPane();
-		}
-	}
-
-	/*
-	 * Toggle the clicked element between having .checked class or not
-	 */
-	function toggleChecked(e) {
-		if (e.target.classList.contains('checked')) {
-			e.target.classList.remove('checked');
-		} else {
-			e.target.classList.add('checked');
-		}
-	}
+  }
 
 
-	/*** Add event listeners ***/
+  /*
+   * Start playing animations, starting from row 1 of the animation table
+   */
+  function startAnimation() {
+    // Clear any pre-existing animations, just in case
+    clearTimeout(animTimeoutHandle);
 
-	// Add click event listeners to all toggle buttons
-	for (i = 0; i < toggles.length; i += 1) {
-		toggles[i].addEventListener('click', toggleChecked, false);
-	}
+    // Reset play flag to true
+    animPlayFlag = true;
 
-	// Add event listeners to all other buttons
-	paramSelect.addEventListener('change', paramChange, false);
-	deleteRowButton.addEventListener('click', deleteRow, false);
-	toggleAnimButton.addEventListener('click', toggleAnimationPane, false);
-	animCloseButton.addEventListener('click', closeAnimationPane, false);
-	addFrameButton.addEventListener('click', addFrame, false);
-	animPlayButton.addEventListener('click', startAnimation, false);
-	animStopButton.addEventListener('click', stopAnimation, false);
+    // Add .playing class to #anim
+    anim.classList.add('playing');
+
+    // Ensure current colour is up to date
+    getStuff(function (res) {
+      currentColour = {
+        hsv: {
+          h: res.hue / 0xFFFF,
+          s: res.sat / 0xFF,
+          v: res.bri / 0xFF
+        },
+        on: res.on
+      };
+
+      setFrameIndicatorSymbol();
+
+      // Start animations from the top
+      runAnimation(1);
+    }, function (err) {
+      // An error occurred so lights may not respond
+      window.alert('An error occurred when getting data from the Hue Bridge:\n' + err.description);
+
+      // Play animations anyway but with current colour set to off
+      currentColour.on = false;
+      setFrameIndicatorSymbol();
+      runAnimation(1);
+    });
+
+    // Hide play button and show stop button
+    hideElement(animPlayButton);
+    showElement(animStopButton);
+  }
+
+
+  /*
+   * Stop playing animations
+   */
+  function stopAnimation() {
+    // Raise stop flag
+    animPlayFlag = false;
+
+    // Remove .playing class from #anim
+    anim.classList.remove('playing');
+
+    // Stop the currently running animation
+    clearTimeout(animTimeoutHandle);
+
+    // Show play button and hide stop button
+    showElement(animPlayButton);
+    hideElement(animStopButton);
+  }
+
+
+  /*
+   * Add an animation frame row to the table
+   * The last animation frame is cloned and inserted
+   */
+  function addFrame() {
+    // Duplicate the penultimate row in the table
+    var index = animTable.rows.length - 2,
+      oldRow = animTable.rows[index],
+      newRow = oldRow.cloneNode(true),
+      lastRow = animTable.rows[index + 1];
+
+    // Add event listeners
+    newRow.getElementsByClassName('delete-row')[0]
+      .addEventListener('click', deleteRow, false);
+    newRow.getElementsByClassName('param')[0]
+      .addEventListener('change', paramChange);
+
+    // Match parameter select
+    newRow.getElementsByClassName('param')[0].value =
+      oldRow.getElementsByClassName('param')[0].value;
+
+    // Insert into table
+    animTbody.insertBefore(newRow, lastRow);
+  }
+
+  function showAnimationPane() {
+    showElement(anim);
+  }
+
+  function closeAnimationPane() {
+    hideElement(anim);
+    stopAnimation();
+  }
+
+  function toggleAnimationPane() {
+    if (isHidden(anim)) {
+      showAnimationPane();
+    } else {
+      closeAnimationPane();
+    }
+  }
+
+  /*
+   * Toggle the clicked element between having .checked class or not
+   */
+  function toggleChecked(e) {
+    if (e.target.classList.contains('checked')) {
+      e.target.classList.remove('checked');
+    } else {
+      e.target.classList.add('checked');
+    }
+  }
+
+
+  /*** Add event listeners ***/
+
+  // Add click event listeners to all toggle buttons
+  for (i = 0; i < toggles.length; i += 1) {
+    toggles[i].addEventListener('click', toggleChecked, false);
+  }
+
+  // Add event listeners to all other buttons
+  paramSelect.addEventListener('change', paramChange, false);
+  deleteRowButton.addEventListener('click', deleteRow, false);
+  toggleAnimButton.addEventListener('click', toggleAnimationPane, false);
+  animCloseButton.addEventListener('click', closeAnimationPane, false);
+  addFrameButton.addEventListener('click', addFrame, false);
+  animPlayButton.addEventListener('click', startAnimation, false);
+  animStopButton.addEventListener('click', stopAnimation, false);
 }
 
 
@@ -1775,164 +1775,164 @@ function initialiseAnimationsPane() {
  ******************/
 
 function initialiseSettingsPanel() {
-	'use strict';
-	var hueIp = document.getElementById('hue-ip'),
-		hueUsername = document.getElementById('hue-username'),
-		hueLightNo = document.getElementById('hue-light-no'),
-		hueTest = document.getElementById('hue-test'),
-		hueSave = document.getElementById('hue-save'),
-		hueClear = document.getElementById('hue-clear'),
-		hueMessages = document.getElementById('hue-messages'),
-		messageTimeoutHandle;
+  'use strict';
+  var hueIp = document.getElementById('hue-ip'),
+    hueUsername = document.getElementById('hue-username'),
+    hueLightNo = document.getElementById('hue-light-no'),
+    hueTest = document.getElementById('hue-test'),
+    hueSave = document.getElementById('hue-save'),
+    hueClear = document.getElementById('hue-clear'),
+    hueMessages = document.getElementById('hue-messages'),
+    messageTimeoutHandle;
 
-	/*
-	 * Display a message in a span in the settings page
-	 */
-	function displayMessage(str, type, timeout) {
-		// Show the message in the span
-		hueMessages.innerHTML = str;
-		hueMessages.classList.remove('fade-out');
+  /*
+   * Display a message in a span in the settings page
+   */
+  function displayMessage(str, type, timeout) {
+    // Show the message in the span
+    hueMessages.innerHTML = str;
+    hueMessages.classList.remove('fade-out');
 
-		switch (type) {
-		case 'info':
-			hueMessages.style.color = '#6FC';
-			break;
+    switch (type) {
+    case 'info':
+      hueMessages.style.color = '#6FC';
+      break;
 
-		case 'error':
-			hueMessages.style.color = '#F44';
-			break;
+    case 'error':
+      hueMessages.style.color = '#F44';
+      break;
 
-		default:
-			hueMessages.style.color = '#CCC';
-			break;
-		}
+    default:
+      hueMessages.style.color = '#CCC';
+      break;
+    }
 
-		// Clear timeout handle in case several messages were
-		// displayed in succesion
-		clearTimeout(messageTimeoutHandle);
+    // Clear timeout handle in case several messages were
+    // displayed in succesion
+    clearTimeout(messageTimeoutHandle);
 
-		// Clear the span after a few seconds
-		messageTimeoutHandle = setTimeout(function () {
-			hueMessages.classList.add('fade-out');
-		}, timeout || 5000);
-	}
+    // Clear the span after a few seconds
+    messageTimeoutHandle = setTimeout(function () {
+      hueMessages.classList.add('fade-out');
+    }, timeout || 5000);
+  }
 
-	/*
-	 * Take values from the form and update the global hue variable
-	 */
-	function submitForm() {
-		hue.ip = hueIp.value || '192.168.0.0';
-		hue.userId = hueUsername.value || 'undefined--clear-data-and-reload-to-create-new';
-		hue.lightNo = hueLightNo.value || 1;
-		setHueUrls();
-	}
+  /*
+   * Take values from the form and update the global hue variable
+   */
+  function submitForm() {
+    hue.ip = hueIp.value || '192.168.0.0';
+    hue.userId = hueUsername.value || 'undefined--clear-data-and-reload-to-create-new';
+    hue.lightNo = hueLightNo.value || 1;
+    setHueUrls();
+  }
 
-	/*
-	 * Get data from the hue bridge about all lights and
-	 * fill the light selection dropdown with room names
-	 */
-	function populateLightSelection() {
-		getAllLights(function (res) {
-			var lightNo,
-				lightNames = [];
+  /*
+   * Get data from the hue bridge about all lights and
+   * fill the light selection dropdown with room names
+   */
+  function populateLightSelection() {
+    getAllLights(function (res) {
+      var lightNo,
+        lightNames = [];
 
-			// Clear the light number selection
-			hueLightNo.innerHTML = '';
+      // Clear the light number selection
+      hueLightNo.innerHTML = '';
 
-			// For each light found connected to the bridge
-			for (lightNo in res) {
-				if (res.hasOwnProperty(lightNo)) {
-					// Add a named option for it to be selected
-					hueLightNo.innerHTML +=
-						'<option value="' + lightNo + '">' +
-						res[lightNo].name +
-						'</option>';
+      // For each light found connected to the bridge
+      for (lightNo in res) {
+        if (res.hasOwnProperty(lightNo)) {
+          // Add a named option for it to be selected
+          hueLightNo.innerHTML +=
+            '<option value="' + lightNo + '">' +
+            res[lightNo].name +
+            '</option>';
 
-					lightNames.push(res[lightNo].name);
-				}
-			}
+          lightNames.push(res[lightNo].name);
+        }
+      }
 
-			if (lightNames.length > 0) {
-				displayMessage('Lights found: ' + lightNames.join(', '), 'info');
-			} else {
-				displayMessage('Connected, but list of lights was empty.', 'error');
-			}
+      if (lightNames.length > 0) {
+        displayMessage('Lights found: ' + lightNames.join(', '), 'info');
+      } else {
+        displayMessage('Connected, but list of lights was empty.', 'error');
+      }
 
-			// Make sure the form elements are up to date
-			hueIp.value = hue.ip;
-			hueUsername.value = hue.userId;
-			hueLightNo.value = hue.lightNo;
-		}, function (err) {
-			// Could not find any lights
-			hueLightNo.innerHTML = '<option value="" selected>&lt;No lights found&gt;</option>';
-			// Display error in message area
-			displayMessage('The following error occurred: ' + err.description, 'error');
-		});
-	}
+      // Make sure the form elements are up to date
+      hueIp.value = hue.ip;
+      hueUsername.value = hue.userId;
+      hueLightNo.value = hue.lightNo;
+    }, function (err) {
+      // Could not find any lights
+      hueLightNo.innerHTML = '<option value="" selected>&lt;No lights found&gt;</option>';
+      // Display error in message area
+      displayMessage('The following error occurred: ' + err.description, 'error');
+    });
+  }
 
-	document.addEventListener('huebridgeip', function (res) {
-		hueIp.value = res.detail.internalipaddress;
-	});
+  document.addEventListener('huebridgeip', function (res) {
+    hueIp.value = res.detail.internalipaddress;
+  });
 
-	document.addEventListener('hueconnection', populateLightSelection);
+  document.addEventListener('hueconnection', populateLightSelection);
 
-	document.addEventListener('hueerror', function (e) {
-		// Update form with parameters currently being used so it is
-		// populated even though the connection failed
-		// This allows settings to be trial and errored manually.
-		hueIp.value = hue.ip;
-		hueUsername.value = hue.userId;
-		//hueLightNo.value = '<No lights found>';
-	});
+  document.addEventListener('hueerror', function (e) {
+    // Update form with parameters currently being used so it is
+    // populated even though the connection failed
+    // This allows settings to be trial and errored manually.
+    hueIp.value = hue.ip;
+    hueUsername.value = hue.userId;
+    //hueLightNo.value = '<No lights found>';
+  });
 
-	hueIp.addEventListener('change', function () {
-		hue.ip = hueIp.value;
-		setHueUrls();
-	}, false);
+  hueIp.addEventListener('change', function () {
+    hue.ip = hueIp.value;
+    setHueUrls();
+  }, false);
 
-	hueUsername.addEventListener('change', function () {
-		hue.userId = hueUsername.value;
-		setHueUrls();
-	}, false);
+  hueUsername.addEventListener('change', function () {
+    hue.userId = hueUsername.value;
+    setHueUrls();
+  }, false);
 
-	hueLightNo.addEventListener('change', function () {
-		hue.lightNo = hueLightNo.value;
-		setHueUrls();
-	}, false);
+  hueLightNo.addEventListener('change', function () {
+    hue.lightNo = hueLightNo.value;
+    setHueUrls();
+  }, false);
 
-	hueTest.addEventListener('click', function () {
-		// Update the gloabl hue variable with
-		// settings from the form
-		submitForm();
+  hueTest.addEventListener('click', function () {
+    // Update the gloabl hue variable with
+    // settings from the form
+    submitForm();
 
-		// Display the the search has started
-		displayMessage('Searching for lights...', 'other', 20e3);
+    // Display the the search has started
+    displayMessage('Searching for lights...', 'other', 20e3);
 
-		// Search for lights
-		populateLightSelection();
-	});
+    // Search for lights
+    populateLightSelection();
+  });
 
-	hueSave.addEventListener('click', function () {
-		// Submit so that the global hue variable is up to date
-		submitForm();
+  hueSave.addEventListener('click', function () {
+    // Submit so that the global hue variable is up to date
+    submitForm();
 
-		// Store the global hue variable
-		storage.set({
-			hue: hue
-		});
+    // Store the global hue variable
+    storage.set({
+      hue: hue
+    });
 
-		// Save message
-		displayMessage('Changes saved.', 'info');
+    // Save message
+    displayMessage('Changes saved.', 'info');
 
-		// Establish a connection with the new parameters
-		establishConnection();
-	}, false);
+    // Establish a connection with the new parameters
+    establishConnection();
+  }, false);
 
-	hueClear.addEventListener('click', function () {
-		storage.clear();
+  hueClear.addEventListener('click', function () {
+    storage.clear();
 
-		displayMessage('Settings cleared.', 'info');
-	}, false);
+    displayMessage('Settings cleared.', 'info');
+  }, false);
 }
 
 
@@ -1949,84 +1949,84 @@ function initialiseSettingsPanel() {
  * trying to connect.
  */
 function initialiseConnectingSplashscreen() {
-	'use strict';
-	var connectingSplashscreen = document.getElementById('connecting'),
-		connectingMessage = document.getElementById('connecting-message'),
-		connectingSkip = document.getElementById('connecting-skip'),
-		connectingSpinner = document.getElementById('connecting-spinner'),
-		connectingError = document.getElementById('connecting-error'),
-		connectingErrorMessage = document.getElementById('connecting-error-message'),
-		connectingTimedOut = document.getElementById('connecting-timed-out'),
-		connectingRetryButton = document.getElementById('connecting-retry');
+  'use strict';
+  var connectingSplashscreen = document.getElementById('connecting'),
+    connectingMessage = document.getElementById('connecting-message'),
+    connectingSkip = document.getElementById('connecting-skip'),
+    connectingSpinner = document.getElementById('connecting-spinner'),
+    connectingError = document.getElementById('connecting-error'),
+    connectingErrorMessage = document.getElementById('connecting-error-message'),
+    connectingTimedOut = document.getElementById('connecting-timed-out'),
+    connectingRetryButton = document.getElementById('connecting-retry');
 
-	/*
-	 * Prematurely close the connecting pane.
-	 * This allows access to other panels and other parts of the site,
-	 * however, lights will not respond to any inputs until the connection
-	 * is made.
-	 */
-	function skipConnecting() {
-		if (connectingSplashscreen) {
-			hideElement(connectingSplashscreen);
-		}
-		window.alert('Please note: Hue lights will not respond until the connection is made.\nWill continue trying to connect in the background.');
-	}
+  /*
+   * Prematurely close the connecting pane.
+   * This allows access to other panels and other parts of the site,
+   * however, lights will not respond to any inputs until the connection
+   * is made.
+   */
+  function skipConnecting() {
+    if (connectingSplashscreen) {
+      hideElement(connectingSplashscreen);
+    }
+    window.alert('Please note: Hue lights will not respond until the connection is made.\nWill continue trying to connect in the background.');
+  }
 
-	/*
-	 * Reset hue parameters and reload
-	 */
-	function resetAndRetry() {
-		storage.clear();
-		firstTimeSetup();
-		showElement(connectingSpinner);
-		hideElement(connectingError);
-	}
+  /*
+   * Reset hue parameters and reload
+   */
+  function resetAndRetry() {
+    storage.clear();
+    firstTimeSetup();
+    showElement(connectingSpinner);
+    hideElement(connectingError);
+  }
 
 
-	// Attach a click handler that allows the connecting splashscreen to be
-	// hidden early.
-	if (connectingSkip) {
-		connectingSkip.addEventListener('click', skipConnecting, false);
-	}
+  // Attach a click handler that allows the connecting splashscreen to be
+  // hidden early.
+  if (connectingSkip) {
+    connectingSkip.addEventListener('click', skipConnecting, false);
+  }
 
-	if (connectingRetryButton) {
-		connectingRetryButton.addEventListener('click', resetAndRetry, false);
-	}
+  if (connectingRetryButton) {
+    connectingRetryButton.addEventListener('click', resetAndRetry, false);
+  }
 
-	// Once connected, hide the splashscreen
-	document.addEventListener('hueconnection', function (e) {
-		if (connectingSplashscreen) {
-			hideElement(connectingSplashscreen);
-		}
-	});
+  // Once connected, hide the splashscreen
+  document.addEventListener('hueconnection', function (e) {
+    if (connectingSplashscreen) {
+      hideElement(connectingSplashscreen);
+    }
+  });
 
-	// If an error occurs, display the error message in the splashscreen
-	document.addEventListener('hueerror', function (e) {
-		var err = e.detail;
+  // If an error occurs, display the error message in the splashscreen
+  document.addEventListener('hueerror', function (e) {
+    var err = e.detail;
 
-		if (err.detail || err.description) {
-			connectingErrorMessage.innerHTML = err.detail || err.description;
-			hideElement(connectingTimedOut);
-		} else {
-			connectingErrorMessage.innerHTML =  'Connection timed out.';
-			showElement(connectingTimedOut);
-		}
+    if (err.detail || err.description) {
+      connectingErrorMessage.innerHTML = err.detail || err.description;
+      hideElement(connectingTimedOut);
+    } else {
+      connectingErrorMessage.innerHTML =  'Connection timed out.';
+      showElement(connectingTimedOut);
+    }
 
-		hideElement(connectingSpinner);
-		showElement(connectingError);
-	});
+    hideElement(connectingSpinner);
+    showElement(connectingError);
+  });
 
-	document.addEventListener('huelinkbutton', function (e) {
-		connectingMessage.innerHTML = 'Please press the link button on the Hue Bridge...';
-	});
+  document.addEventListener('huelinkbutton', function (e) {
+    connectingMessage.innerHTML = 'Please press the link button on the Hue Bridge...';
+  });
 
-	document.addEventListener('huebridgeip', function (e) {
-		connectingMessage.innerHTML = 'Connecting to Hue Bridge...';
-	});
+  document.addEventListener('huebridgeip', function (e) {
+    connectingMessage.innerHTML = 'Connecting to Hue Bridge...';
+  });
 
-	document.addEventListener('huebridgesearchstart', function(e) {
-		connectingMessage.innerHTML = 'Searching for Hue Bridges...';
-	});
+  document.addEventListener('huebridgesearchstart', function(e) {
+    connectingMessage.innerHTML = 'Searching for Hue Bridges...';
+  });
 }
 
 
@@ -2035,108 +2035,108 @@ function initialiseConnectingSplashscreen() {
  ******************************************/
 
 function LocalDataStorage() {
-	'use strict';
+  'use strict';
 
-	// Find which type of storage to use for the environment
-	try {
-		// Webpage environment
-		this.storageType = 'local';
-		window.localStorage.available = true;
-	} catch (localErr) {
-		// window.localStorage failed
-		// Try chrome.storage.local for Chrome Apps instead
-		this.storageType = 'chrome';
-		try {
-			chrome.storage.local.set({
-				available: true
-			});
-		} catch (chromeErr) {
-			this.storageType = 'unavailable';
-			console.error('Storage unavailable');
-		}
-	}
+  // Find which type of storage to use for the environment
+  try {
+    // Webpage environment
+    this.storageType = 'local';
+    window.localStorage.available = true;
+  } catch (localErr) {
+    // window.localStorage failed
+    // Try chrome.storage.local for Chrome Apps instead
+    this.storageType = 'chrome';
+    try {
+      chrome.storage.local.set({
+        available: true
+      });
+    } catch (chromeErr) {
+      this.storageType = 'unavailable';
+      console.error('Storage unavailable');
+    }
+  }
 
-	/*
-	 * @param key - optional, a string key for the data
-	 *              to be retrieved. If omitted, an object
-	 *              of all key:value pairs will be returned
-	 * @param callback - a callback function whose first
-	 *                   argument contains either the value
-	 *                   at the provided key, or an object of
-	 *                   all key:value pairs
-	 */
-	this.get = function (callback) {
-		var key, items;
+  /*
+   * @param key - optional, a string key for the data
+   *              to be retrieved. If omitted, an object
+   *              of all key:value pairs will be returned
+   * @param callback - a callback function whose first
+   *                   argument contains either the value
+   *                   at the provided key, or an object of
+   *                   all key:value pairs
+   */
+  this.get = function (callback) {
+    var key, items;
 
-		switch (this.storageType) {
-		case 'local':
-			items = {};
+    switch (this.storageType) {
+    case 'local':
+      items = {};
 
-			for (key in window.localStorage) {
-				if (window.localStorage.hasOwnProperty(key)) {
-					items[key] = JSON.parse(window.localStorage[key]);
-				}
-			}
+      for (key in window.localStorage) {
+        if (window.localStorage.hasOwnProperty(key)) {
+          items[key] = JSON.parse(window.localStorage[key]);
+        }
+      }
 
-			if (typeof callback === 'function') {
-				callback(items);
-			}
+      if (typeof callback === 'function') {
+        callback(items);
+      }
 
-			break;
+      break;
 
-		case 'chrome':
-			chrome.storage.local.get(null, function (items) {
-				if (typeof callback === 'function') {
-					callback(items);
-				}
-			});
-			break;
-		}
-	};
+    case 'chrome':
+      chrome.storage.local.get(null, function (items) {
+        if (typeof callback === 'function') {
+          callback(items);
+        }
+      });
+      break;
+    }
+  };
 
-	/*
-	 * @param obj - an object of key:value pairs to be stored
-	 * @param callback - the callback function to be run once
-	 *                   the objects have been saved
-	 */
-	this.set = function (obj, callback) {
-		var key;
+  /*
+   * @param obj - an object of key:value pairs to be stored
+   * @param callback - the callback function to be run once
+   *                   the objects have been saved
+   */
+  this.set = function (obj, callback) {
+    var key;
 
-		switch (this.storageType) {
-		case 'local':
-			for (key in obj) {
-				if (obj.hasOwnProperty(key)) {
-					window.localStorage[key] = JSON.stringify(obj[key]);
-				}
-			}
-			console.log('Saved to local storage.');
-			break;
+    switch (this.storageType) {
+    case 'local':
+      for (key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          window.localStorage[key] = JSON.stringify(obj[key]);
+        }
+      }
+      console.log('Saved to local storage.');
+      break;
 
-		case 'chrome':
-			chrome.storage.local.set(obj, function () {
-				console.log('Saved to chrome storage.');
-			});
-			break;
-		}
-	};
+    case 'chrome':
+      chrome.storage.local.set(obj, function () {
+        console.log('Saved to chrome storage.');
+      });
+      break;
+    }
+  };
 
-	/*
-	 * Clears all storage
-	 */
-	this.clear = function () {
-		switch (this.storageType) {
-		case 'local':
-			window.localStorage.clear();
-			console.log('Local storage cleared.');
-			break;
+  /*
+   * Clears all storage
+   */
+  this.clear = function () {
+    switch (this.storageType) {
+    case 'local':
+      window.localStorage.clear();
+      console.log('Local storage cleared.');
+      break;
 
-		case 'chrome':
-			chrome.storage.local.clear(function () {
-				console.log('Chrome storage cleared.');
-			});
-			break;
-		}
-	};
+    case 'chrome':
+      chrome.storage.local.clear(function () {
+        console.log('Chrome storage cleared.');
+      });
+      break;
+    }
+  };
 }
 
 
@@ -2145,29 +2145,29 @@ function LocalDataStorage() {
  ******************************************/
 
 function initialise() {
-	'use strict';
+  'use strict';
 
-	// Initialise components
-	initialiseConnectingSplashscreen();
-	initialiseColourWheel();
-	initialiseAnimationsPane();
-	initialiseSettingsPanel();
+  // Initialise components
+  initialiseConnectingSplashscreen();
+  initialiseColourWheel();
+  initialiseAnimationsPane();
+  initialiseSettingsPanel();
 
-	// Get local storage space
-	storage = new LocalDataStorage();
+  // Get local storage space
+  storage = new LocalDataStorage();
 
-	// Check for existing hue parameters
-	storage.get(function (items) {
-		if (items.hue) {
-			// If present, make the hue parameters global
-			hue = items.hue;
-			// Then test the connection
-			establishConnection();
-		} else {
-			// If no parameters were present
-			firstTimeSetup();
-		}
-	});
+  // Check for existing hue parameters
+  storage.get(function (items) {
+    if (items.hue) {
+      // If present, make the hue parameters global
+      hue = items.hue;
+      // Then test the connection
+      establishConnection();
+    } else {
+      // If no parameters were present
+      firstTimeSetup();
+    }
+  });
 }
 
 document.addEventListener('DOMContentLoaded', initialise, false);

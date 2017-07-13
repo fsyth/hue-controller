@@ -2,173 +2,173 @@
 <html>
 
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
-	<title>Hue Controller</title>
-	<link rel="stylesheet" href="fonts/material-icons.css">
-	<link rel="stylesheet" href="index.css">
-	<link rel="icon" href="favicon.ico">
-	<script src="lights.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+  <title>Hue Controller</title>
+  <link rel="stylesheet" href="fonts/material-icons.css">
+  <link rel="stylesheet" href="index.css">
+  <link rel="icon" href="favicon.ico">
+  <script src="lights.js"></script>
 </head>
 
 <body>
-	<div id="connecting">
-		<div id="connecting-spinner">
-			<span id="connecting-message">Connecting to Hue Bridge...</span>
-			<br>
-			<i class="material-icons spin">autorenew</i>
-		</div>
-		<div id="connecting-error" class="hidden">
-			<span>An error occurred getting data from the Hue Bridge
-				<br><br>
-				<span id="connecting-error-message">Connection timed out</span>
-				<br>
-				<br>
-				<span>
-					<span id="connecting-timed-out" class="hidden">
-						Ensure you are connected to the internet
-						<br><br>
-					</span>
-					Hue settings may be out of date
-					<br>
-					<button id="connecting-retry" class="button">Clear data and retry?</button>
-				</span>
-			</span>
-		</div>
-		<br>
-		<br>
-		<a id="connecting-skip" class="button">continue anyway</a>
-	</div>
-	<div id="top-left-buttons-panel">
-		<i id="settings-button" class="material-icons toggle" title="Settings">settings</i>
-		<div id="settings" class="fade-in container">
-			<div class="centre">
-				<h3>Settings</h3>
-				<table>
-					<tbody>
-						<tr>
-							<td><label>Bridge IP</label></td>
-							<td><input id="hue-ip" type="url"></td>
-						</tr>
-						<tr>
-							<td><label>Username</label></td>
-							<td><input id="hue-username" type="text"></td>
-						</tr>
-						<tr>
-							<td>Light/Room</td>
-							<td>
-								<select id="hue-light-no">
-									<option value="" selected>&lt;No lights found&gt;</option>
-								</select>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-				<br>
-				<button id="hue-test" class="button">Find lights</button>
-				<button id="hue-save" class="button">Save changes</button>
-				<button id="hue-clear" class="button">Clear data</button>
-				<br><br>
-				<span id="hue-messages"></span>
-				<br>
-				<div id="about">Version 0.2.3, James Forsyth, 2016</div>
-			</div>
-		</div>
-		<i id="reset-button" class="material-icons button" title="Reset to default colour">settings_backup_restore</i>
-		<i id="help-button" class="material-icons button">help_outline</i>
-		<div id="help" class="fade-in container">
-			<div class="centre">
-				<h3>Controls</h3>
-				<p><span class="keys">Click</span> or <span class="keys">Tap</span> on the colour wheel to set the Hue light to that colour.</p>
-				<p><span class="keys">Drag</span> to change the colour smoothly.</p>
-				<p>Click the <i class="material-icons">lightbulb_outline</i> button to change beween Colour Mode and Brightness Mode.</p>
-				<p>Alternatively, <span class="keys">Double-Click</span> the colour wheel to change modes.</p>
-				<p>You can also scroll the <span class="keys">Mouse Wheel</span> to adjust the brightness.</p>
-				<p>Click the <i class="material-icons">power_settings_new</i> icon to toggle the Hue light On and Off.</p>
-				<p>The <i class="material-icons">playlist_play</i> icon opens the animation pane. Here you can specify a sequence of instructions using the animation table.</p>
-				<p><span class="keys">Hover</span> over the top toolbar to view other available colour selction modes.<br>Select:</p>
-				<ul>
-					<li><i class="material-icons">palette</i> for Hue/Saturation Colour Wheel</li>
-					<li><i class="material-icons">whatshot</i> for Colour Temperature Gamut</li>
-					<li><i class="material-icons">image</i> to select an image from your device to pick from</li>
-				</ul>
-				<p>Click the <i class="material-icons">settings_backup_restore</i> button to reset the light to its default colour (the same as turning it off and on again).</p>
-				<p>Click the <i class="material-icons">settings</i> button to show the settings panel where you can manually configure IP, Username and the selected Light or Room.</p>
-			</div>
-		</div>
-	</div>
-	<div class="fade-in container">
-		<div class="carousel">
-			<!--i id="carousel-gamut" class="material-icons button" title="Colour gamut">signal_cellular_null</i-->
-			<i id="carousel-ct" class="fade-in material-icons button" title="Temperature">whatshot</i>
-			<i id="carousel-colour-wheel" class="fade-in material-icons button selected" title="Colour wheel">palette</i>
-			<i id="carousel-image" class="fade-in material-icons button" title="Image">image</i>
-			<!--i id="carousel-colour-loop" class="material-icons button" title="Colour Loop">rotate_right</i-->
-		</div>
-		<div id="image-gallery" class="hidden fade-in container">
-			<div class="centre">
-				<i class="material-icons close button">close</i>
-				<i id="add-image" class="fade-in material-icons button" title="Add a new image">add_a_photo</i>
-				<br>
-			</div>
-		</div>
-		<div id="colour-wheel"></div>
-		<div id="buttons-panel">
-			<i id="mode" class="material-icons button" title="Colour/Brightness">lightbulb_outline</i>
-			<i id="toggle" class="material-icons button" title="On/Off">power_settings_new</i>
-			<i id="show-anim" class="material-icons button" title="Animations">playlist_play</i>
-		</div>
-		<!--br>
-		<input id="colour" type="color" class="hidden" value="#FFFFFF"-->
-	</div>
-	<div id="anim" class="hidden container fade-in">
-		<i class="material-icons close button">close</i>
-		<h3>Create a custom animation sequence</h3>
-		<table id="anim-table">
-			<thead>
-				<tr>
-					<th><i id="frame-indicator" class="material-icons">play_arrow</i>Parameter</th>
-					<th>Value</th>
-					<th>Then wait (s)</th>
-					<th><!--Delete row buttons--></th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr>
-					<td class="param-td">
-						<select class="param">
-							<option>Colour</option>
-							<option>Hue</option>
-							<option>Saturation</option>
-							<option>Brightness</option>
-							<option>Temperature</option>
-							<option>Random</option>
-							<option>On/Off</option>
-						</select>
-					</td>
-					<td class="val-td">
-						<input class="val" type="color" value="#FFFFFF">
-						<input class="val hidden" type="checkbox" checked>
-						<input class="val hidden" type="range" min="0" max="1" step="0.1" value="1">
-					</td>
-					<td>
-						<input class="time" type="number" min="0" step="0.1" value="1">
-					</td>
-					<td>
-						<i class="delete-row button material-icons">delete_forever</i>
-					</td>
-				</tr>
-				<tr>
-					<td><i id="add-frame" class="material-icons button" title="Add frame">playlist_add</i></td>
-					<td>
-						<i id="play-animation" class="material-icons button" title="Play animation">play_circle_outline</i>
-						<i id="stop-animation" class="material-icons button hidden" title="Stop animation">pause_circle_outline</i>
-					</td>
-					<td><i id="loop-anim" class="material-icons toggle checked" title="Loop" value="true">repeat</i></td>
-				</tr>
-			</tbody>
-		</table>
-	</div>
+  <div id="connecting">
+    <div id="connecting-spinner">
+      <span id="connecting-message">Connecting to Hue Bridge...</span>
+      <br>
+      <i class="material-icons spin">autorenew</i>
+    </div>
+    <div id="connecting-error" class="hidden">
+      <span>An error occurred getting data from the Hue Bridge
+        <br><br>
+        <span id="connecting-error-message">Connection timed out</span>
+        <br>
+        <br>
+        <span>
+          <span id="connecting-timed-out" class="hidden">
+            Ensure you are connected to the internet
+            <br><br>
+          </span>
+          Hue settings may be out of date
+          <br>
+          <button id="connecting-retry" class="button">Clear data and retry?</button>
+        </span>
+      </span>
+    </div>
+    <br>
+    <br>
+    <a id="connecting-skip" class="button">continue anyway</a>
+  </div>
+  <div id="top-left-buttons-panel">
+    <i id="settings-button" class="material-icons toggle" title="Settings">settings</i>
+    <div id="settings" class="fade-in container">
+      <div class="centre">
+        <h3>Settings</h3>
+        <table>
+          <tbody>
+            <tr>
+              <td><label>Bridge IP</label></td>
+              <td><input id="hue-ip" type="url"></td>
+            </tr>
+            <tr>
+              <td><label>Username</label></td>
+              <td><input id="hue-username" type="text"></td>
+            </tr>
+            <tr>
+              <td>Light/Room</td>
+              <td>
+                <select id="hue-light-no">
+                  <option value="" selected>&lt;No lights found&gt;</option>
+                </select>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <br>
+        <button id="hue-test" class="button">Find lights</button>
+        <button id="hue-save" class="button">Save changes</button>
+        <button id="hue-clear" class="button">Clear data</button>
+        <br><br>
+        <span id="hue-messages"></span>
+        <br>
+        <div id="about">Version 0.3, James Forsyth, 2017</div>
+      </div>
+    </div>
+    <i id="reset-button" class="material-icons button" title="Reset to default colour">settings_backup_restore</i>
+    <i id="help-button" class="material-icons button">help_outline</i>
+    <div id="help" class="fade-in container">
+      <div class="centre">
+        <h3>Controls</h3>
+        <p><span class="keys">Click</span> or <span class="keys">Tap</span> on the colour wheel to set the Hue light to that colour.</p>
+        <p><span class="keys">Drag</span> to change the colour smoothly.</p>
+        <p>Click the <i class="material-icons">lightbulb_outline</i> button to change beween Colour Mode and Brightness Mode.</p>
+        <p>Alternatively, <span class="keys">Double-Click</span> the colour wheel to change modes.</p>
+        <p>You can also scroll the <span class="keys">Mouse Wheel</span> to adjust the brightness.</p>
+        <p>Click the <i class="material-icons">power_settings_new</i> icon to toggle the Hue light On and Off.</p>
+        <p>The <i class="material-icons">playlist_play</i> icon opens the animation pane. Here you can specify a sequence of instructions using the animation table.</p>
+        <p><span class="keys">Hover</span> over the top toolbar to view other available colour selction modes.<br>Select:</p>
+        <ul>
+          <li><i class="material-icons">palette</i> for Hue/Saturation Colour Wheel</li>
+          <li><i class="material-icons">whatshot</i> for Colour Temperature Gamut</li>
+          <li><i class="material-icons">image</i> to select an image from your device to pick from</li>
+        </ul>
+        <p>Click the <i class="material-icons">settings_backup_restore</i> button to reset the light to its default colour (the same as turning it off and on again).</p>
+        <p>Click the <i class="material-icons">settings</i> button to show the settings panel where you can manually configure IP, Username and the selected Light or Room.</p>
+      </div>
+    </div>
+  </div>
+  <div class="fade-in container">
+    <div class="carousel">
+      <!--i id="carousel-gamut" class="material-icons button" title="Colour gamut">signal_cellular_null</i-->
+      <i id="carousel-ct" class="fade-in material-icons button" title="Temperature">whatshot</i>
+      <i id="carousel-colour-wheel" class="fade-in material-icons button selected" title="Colour wheel">palette</i>
+      <i id="carousel-image" class="fade-in material-icons button" title="Image">image</i>
+      <!--i id="carousel-colour-loop" class="material-icons button" title="Colour Loop">rotate_right</i-->
+    </div>
+    <div id="image-gallery" class="hidden fade-in container">
+      <div class="centre">
+        <i class="material-icons close button">close</i>
+        <i id="add-image" class="fade-in material-icons button" title="Add a new image">add_a_photo</i>
+        <br>
+      </div>
+    </div>
+    <div id="colour-wheel"></div>
+    <div id="buttons-panel">
+      <i id="mode" class="material-icons button" title="Colour/Brightness">lightbulb_outline</i>
+      <i id="toggle" class="material-icons button" title="On/Off">power_settings_new</i>
+      <i id="show-anim" class="material-icons button" title="Animations">playlist_play</i>
+    </div>
+    <!--br>
+    <input id="colour" type="color" class="hidden" value="#FFFFFF"-->
+  </div>
+  <div id="anim" class="hidden container fade-in">
+    <i class="material-icons close button">close</i>
+    <h3>Create a custom animation sequence</h3>
+    <table id="anim-table">
+      <thead>
+        <tr>
+          <th><i id="frame-indicator" class="material-icons">play_arrow</i>Parameter</th>
+          <th>Value</th>
+          <th>Then wait (s)</th>
+          <th><!--Delete row buttons--></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="param-td">
+            <select class="param">
+              <option>Colour</option>
+              <option>Hue</option>
+              <option>Saturation</option>
+              <option>Brightness</option>
+              <option>Temperature</option>
+              <option>Random</option>
+              <option>On/Off</option>
+            </select>
+          </td>
+          <td class="val-td">
+            <input class="val" type="color" value="#FFFFFF">
+            <input class="val hidden" type="checkbox" checked>
+            <input class="val hidden" type="range" min="0" max="1" step="0.1" value="1">
+          </td>
+          <td>
+            <input class="time" type="number" min="0" step="0.1" value="1">
+          </td>
+          <td>
+            <i class="delete-row button material-icons">delete_forever</i>
+          </td>
+        </tr>
+        <tr>
+          <td><i id="add-frame" class="material-icons button" title="Add frame">playlist_add</i></td>
+          <td>
+            <i id="play-animation" class="material-icons button" title="Play animation">play_circle_outline</i>
+            <i id="stop-animation" class="material-icons button hidden" title="Stop animation">pause_circle_outline</i>
+          </td>
+          <td><i id="loop-anim" class="material-icons toggle checked" title="Loop" value="true">repeat</i></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </body>
 
 </html>
