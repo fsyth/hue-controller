@@ -24,7 +24,15 @@ function setHueUrls() {
 
 
 /*
- *
+ * Sends an XMLHttpRequest to put data on the Hue Bridge
+ * The path should be a relevant location, such as
+ * lights/1/state.
+ * Paths are relative to the current user/developer api key.
+ * The data should be either an object or JSON formatted
+ * string with key-value pairs to be updated.
+ * The callbacks for responseHandler or errorHandler are
+ * functions of the data returned by the server, typically
+ * an object.
  */
 function huePut(path, data, responseHandler, errorHandler) {
   'use strict';
@@ -53,7 +61,15 @@ function huePut(path, data, responseHandler, errorHandler) {
 
 
 /*
- *
+ * Sends an XMLHttpRequest to get data from the Hue Bridge
+ * The path should be a relevant location, such as an individual
+ * light, e.g. lights/1
+ * An empty string will return all of the accessible data on the
+ * bridge.
+ * Paths are relative to the current user/developer api key.
+ * The callbacks for responseHandler or errorHandler are
+ * functions of the data returned by the server, typically
+ * an object.
  */
 function hueGet(path, responseHandler, errorHandler) {
   'use strict';
@@ -104,7 +120,7 @@ function hueGet(path, responseHandler, errorHandler) {
 function setState(settings, responseHandler, errorHandler) {
   'use strict';
   // The lightNo may be a comma separated string of lights, so split
-  // it and handle each one separately
+  // it and handle each one with a separate huePut
   var ls = hue.lightNo.split(',');
   for (var i = 0; i < ls.length; i++) {
     huePut('lights/' + ls[i] + '/state', settings, responseHandler, errorHandler);
@@ -512,12 +528,12 @@ function rgb2hsv(r, g, b) {
   b /= 0xFF;
 
   var rr, gg, bb,
-    h, s,
-    v = Math.max(r, g, b),
-    diff = v - Math.min(r, g, b),
-    diffc = function (c) {
-      return (v - c) / 6 / diff + 1 / 2;
-    };
+      h, s,
+      v = Math.max(r, g, b),
+      diff = v - Math.min(r, g, b),
+      diffc = function (c) {
+        return (v - c) / 6 / diff + 1 / 2;
+      };
 
   if (diff === 0) {
     h = s = 0;
@@ -563,8 +579,8 @@ function hex2hsv(hex) {
   }
 
   var r = (hex & 0xFF0000) >> 16,
-    g = (hex & 0x00FF00) >> 8,
-    b = (hex & 0x0000FF) >> 0;
+      g = (hex & 0x00FF00) >> 8,
+      b = (hex & 0x0000FF) >> 0;
 
   return rgb2hsv(r, g, b);
 }
@@ -685,7 +701,7 @@ function toggle() {
 function setColour(hex) {
   'use strict';
   var hsv = hex2hsv(hex),
-    hexStr = typeof hex === 'string' ?
+      hexStr = typeof hex === 'string' ?
         hex :
         '#' + ('00000' + hex.toString(16)).slice(-6);
 
@@ -761,56 +777,51 @@ function isHidden(el) {
 function initialiseColourWheel() {
   'use strict';
   var toggleInput = document.getElementById('toggle'),
-    colourInput = document.getElementById('colour'),
-    colourWheel = document.getElementById('colour-wheel'),
-    modeInput = document.getElementById('mode'),
-    resetButton = document.getElementById('reset-button'),
-    carousel = document.getElementById('carousel'),
-    carouselSelection = document.getElementById('carousel-selection'),
-    carouselButtons = {
-      wheel: document.getElementById('carousel-colour-wheel'),
-      ct: document.getElementById('carousel-ct'),
-      image: document.getElementById('carousel-image'),
-      gamut: document.getElementById('carousel-gamut'),
-      loop: document.getElementById('carousel-colour-loop')
-    },
-    imageGallery = document.getElementById('image-gallery'),
-    addImageButton = document.getElementById('add-image'),
-    imageGalleryCloseButton = imageGallery.getElementsByClassName('close')[0],
-    imageInput,
-    canvas,
-    ctx,
-    buffer,
-    radius = Math.min(200, window.innerWidth / 2 - 25),
-    W = 2 * radius,
-    H = 2 * radius,
-    i,
-    x,
-    y,
-    r,
-    t,
-    mode = 0,
-    modes = [ 'colour', 'bri' ],
-    gamut = 0,
-    gamuts = [ 'hue-sat', 'temperature', 'image', 'gamut', 'loop' ],
-    currentColour = {
-      h: 0,
-      s: 0,
-      v: 1,
-      hex: 0xFFFFFF,
-      r: 0xFF,
-      g: 0xFF,
-      b: 0xFF,
-      a: 0xFF,
-      ct: 500
-    },
-    mouse = {
-      x: 0,
-      y: 0
-    },
-    intervalHandle,
-    timeInterval = 100,
-    currentImage = new Image();
+      colourInput = document.getElementById('colour'),
+      colourWheel = document.getElementById('colour-wheel'),
+      modeInput = document.getElementById('mode'),
+      resetButton = document.getElementById('reset-button'),
+      carousel = document.getElementById('carousel'),
+      carouselSelection = document.getElementById('carousel-selection'),
+      carouselButtons = {
+        wheel: document.getElementById('carousel-colour-wheel'),
+        ct: document.getElementById('carousel-ct'),
+        image: document.getElementById('carousel-image'),
+        gamut: document.getElementById('carousel-gamut'),
+        loop: document.getElementById('carousel-colour-loop')
+      },
+      imageGallery = document.getElementById('image-gallery'),
+      addImageButton = document.getElementById('add-image'),
+      imageGalleryCloseButton = imageGallery.getElementsByClassName('close')[0],
+      imageInput,
+      canvas,
+      ctx,
+      buffer,
+      radius = Math.min(200, window.innerWidth / 2 - 25),
+      W = 2 * radius,
+      H = 2 * radius,
+      mode = 0,
+      modes = [ 'colour', 'bri' ],
+      gamut = 0,
+      gamuts = [ 'hue-sat', 'temperature', 'image', 'gamut', 'loop' ],
+      currentColour = {
+        h: 0,
+        s: 0,
+        v: 1,
+        hex: 0xFFFFFF,
+        r: 0xFF,
+        g: 0xFF,
+        b: 0xFF,
+        a: 0xFF,
+        ct: 500
+      },
+      mouse = {
+        x: 0,
+        y: 0
+      },
+      intervalHandle,
+      timeInterval = 100,
+      currentImage = new Image();
 
 
   /*
@@ -863,8 +874,8 @@ function initialiseColourWheel() {
   function setColourToMousePosition() {
     // Get the pixel index from mouse x,y
     var i = 4 * (mouse.y * W + mouse.x),
-      hex,
-      hsv;
+        hex,
+        hsv;
 
     // Ensure pixel under mouse is not transparent
     if (buffer.data[i + 3] !== 0) {
@@ -926,16 +937,14 @@ function initialiseColourWheel() {
    * Draw the colour wheel at the current visibility
    */
   function drawColourWheel() {
-    var h, s, v, rgb;
-
     // For each byte in the buffer
-    for (i = 0; i < buffer.data.length; i += 4) {
+    for (var i = 0; i < buffer.data.length; i += 4) {
       // Calculate the x,y pixel coordinates
-      x = i / 4 % W | 0;
-      y = i / 4 / W | 0;
+      var x = i / 4 % W | 0,
+          y = i / 4 / W | 0;
 
       // Convert x,y to radius from centre of the cirlce
-      r = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
+      var r = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
 
       // For certain radii, we can simplify calculations
       if (r >= radius + 2) {
@@ -946,22 +955,22 @@ function initialiseColourWheel() {
         buffer.data[i + 3] = 0;
       } else {
         // Calculate the angle from the circle centre to the pixel
-        t = Math.atan2(y - radius, x - radius);
+        var t = Math.atan2(y - radius, x - radius);
 
         // Scale angle to range 0-1 to give hue
-        h = t / (2 * Math.PI);
+        var h = t / (2 * Math.PI);
         if (h < 0) {
           h += 1;
         }
 
         // Scale radius to range 0-1 to give saturation
-        s = r / radius;
+        var s = r / radius;
 
         // Visibility
-        v = currentColour.v;
+        var v = currentColour.v;
 
         // Convert hsv format to rgb format
-        rgb = hsv2rgb(h, s, v);
+        var rgb = hsv2rgb(h, s, v);
 
         // Set the pixel in the buffer to the rgb colour
         buffer.data[i]     = rgb.r;
@@ -977,15 +986,13 @@ function initialiseColourWheel() {
    * Draw a circular brightness slider at the current hue and saturation
    */
   function drawBrightnessSlider() {
-    var h, s, v, rgb;
-
-    for (i = 0; i < buffer.data.length; i += 4) {
+    for (var i = 0; i < buffer.data.length; i += 4) {
       // Calculate the x,y pixel coordinates
-      x = i / 4 % W | 0;
-      y = i / 4 / W | 0;
+      var x = i / 4 % W | 0,
+          y = i / 4 / W | 0;
 
       // Convert x,y to radius from centre of the cirlce
-      r = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
+      var r = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
 
       if (r >= radius + 2) {
         // Outside of the circle, set to transparent
@@ -995,12 +1002,12 @@ function initialiseColourWheel() {
         buffer.data[i + 3] = 0;
       } else {
         // Adjust the visibility of the current based on height y
-        h = currentColour.h;
-        s = currentColour.s;
-        v = Math.max(1 - (y / H), 0.01);
+        var h = currentColour.h,
+            s = currentColour.s,
+            v = Math.max(1 - (y / H), 0.01);
 
         // Convert to rbg
-        rgb = hsv2rgb(h, s, v);
+        var rgb = hsv2rgb(h, s, v);
 
         // Adjust the darkness of the colour based on v
         buffer.data[i]     = rgb.r;
@@ -1017,14 +1024,13 @@ function initialiseColourWheel() {
    * range 153-500/K
    */
   function drawTemperatureScale() {
-    var i, ct, rgb;
-    for (i = 0; i < buffer.data.length; i += 4) {
+    for (var i = 0; i < buffer.data.length; i += 4) {
       // Calculate the x,y pixel coordinates
-      x = i / 4 % W | 0;
-      y = i / 4 / W | 0;
+      var x = i / 4 % W | 0,
+          y = i / 4 / W | 0;
 
       // Convert x,y to radius from centre of the cirlce
-      r = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
+      var r = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
 
       if (r >= radius + 2) {
         // Outside of the circle, set to transparent
@@ -1034,10 +1040,10 @@ function initialiseColourWheel() {
         buffer.data[i + 3] = 0;
       } else {
         // Adjust the temperature of the current based on height y
-        ct = (y / H) * 5000 + 2000;
+        var ct = (y / H) * 5000 + 2000;
 
         // Convert to rbg
-        rgb = ct2rgb(ct);
+        var rgb = ct2rgb(ct);
 
         // Adjust the darkness of the colour based on v
         buffer.data[i]     = rgb.r * currentColour.v | 0;
@@ -1053,8 +1059,6 @@ function initialiseColourWheel() {
    * Draw currentImage to the canvas and updates buffer to match
    */
   function drawImage() {
-    var i;
-
     // Draw the image
     ctx.drawImage(currentImage, 0, 0, W, H);
 
@@ -1062,7 +1066,7 @@ function initialiseColourWheel() {
     buffer = ctx.getImageData(0, 0, W, H);
 
     // Adjust brightness
-    /*for (i = 0; i < buffer.data.length; i += 4) {
+    /*for (var i = 0; i < buffer.data.length; i += 4) {
       buffer.data[i]     *= currentColour.v;
       buffer.data[i + 1] *= currentColour.v;
       buffer.data[i + 2] *= currentColour.v;
@@ -1196,10 +1200,9 @@ function initialiseColourWheel() {
    * Update which button in the carousel is shown as currently selected
    */
   function moveCarouselSelectionTo(element) {
-    var siblings = element.parentElement.children,
-      i;
+    var siblings = element.parentElement.children;
     // Remove .selected class from all elements
-    for (i = 0; i < siblings.length; i += 1) {
+    for (var i = 0; i < siblings.length; i += 1) {
       siblings[i].classList.remove('selected');
     }
     element.classList.add('selected');
@@ -1251,8 +1254,7 @@ function initialiseColourWheel() {
    *            hue, sat, bri, on, ct, etc...
    */
   function onHueConnection(e) {
-    var rgb, hex,
-      res = e.detail;
+    var res = e.detail;
 
     // Update currentColour to the lights current state
     // Set brightness to alteast 2% so colour wheel is visible.
@@ -1261,14 +1263,14 @@ function initialiseColourWheel() {
     currentColour.v = Math.max(res.bri / 0xFF, 0.02);
 
     // Convert to rgb to update the rest of current Colour
-    rgb = hsv2rgb(currentColour);
+    var rgb = hsv2rgb(currentColour);
 
     currentColour.r = rgb.r;
     currentColour.g = rgb.g;
     currentColour.b = rgb.b;
 
     // Convert to hex to init HTML elements
-    hex = rgb2hex(rgb);
+    var hex = rgb2hex(rgb);
 
     // Initialise background
     document.body.style.backgroundColor = hex;
@@ -1288,7 +1290,7 @@ function initialiseColourWheel() {
    *            containing the error description
    */
   function onHueError(e) {
-
+    console.error(e);
   }
 
 
@@ -1333,15 +1335,15 @@ function initialiseColourWheel() {
     document.addEventListener('hueerror',      onHueError,  false);
 
     // Attach mouse and touch events to the canvas.
-    canvas.addEventListener('mousedown',       onDragStart, false);
-    canvas.addEventListener('mousemove',       onDrag,      false);
-    canvas.addEventListener('mouseup',         onDragEnd,   false);
     document.body.addEventListener('mouseout', onDragEnd,   false);
-    canvas.addEventListener('touchstart',      onDragStart, false);
-    canvas.addEventListener('touchmove',       onDrag,      false);
-    canvas.addEventListener('touchend',        onDragEnd,   false);
-    canvas.addEventListener('mousewheel',      onScroll,    false);
-    canvas.addEventListener('dblclick',        changeMode,  false);
+    canvas.addEventListener('mousedown',  onDragStart, false);
+    canvas.addEventListener('mousemove',  onDrag,      false);
+    canvas.addEventListener('mouseup',    onDragEnd,   false);
+    canvas.addEventListener('touchstart', onDragStart, false);
+    canvas.addEventListener('touchmove',  onDrag,      false);
+    canvas.addEventListener('touchend',   onDragEnd,   false);
+    canvas.addEventListener('mousewheel', onScroll,    false);
+    canvas.addEventListener('dblclick',   changeMode,  false);
   }
 
 
@@ -1439,30 +1441,29 @@ function initialiseColourWheel() {
 function initialiseAnimationsPane() {
   'use strict';
   var anim = document.getElementById('anim'),
-    animTable = document.getElementById('anim-table'),
-    animTbody = anim.getElementsByTagName('tbody')[0],
-    toggleAnimButton = document.getElementById('show-anim'),
-    addFrameButton = document.getElementById('add-frame'),
-    paramSelect = anim.getElementsByClassName('param')[0],
-    valueInput = anim.getElementsByClassName('val')[0],
-    deleteRowButton = anim.getElementsByClassName('delete-row')[0],
-    animCloseButton = anim.getElementsByClassName('close')[0],
-    animPlayButton = document.getElementById('play-animation'),
-    animStopButton = document.getElementById('stop-animation'),
-    animTimeoutHandle,
-    animPlayFlag = true,
-    frameIndicator = document.getElementById('frame-indicator'),
-    loop = document.getElementById('loop-anim'),
-    toggles = document.getElementsByClassName('toggle'),
-    i,
-    currentColour = {
-      hsv: {
-        h: 0,
-        s: 0,
-        v: 1
-      },
-      on: true
-    };
+      animTable = document.getElementById('anim-table'),
+      animTbody = anim.getElementsByTagName('tbody')[0],
+      toggleAnimButton = document.getElementById('show-anim'),
+      addFrameButton = document.getElementById('add-frame'),
+      paramSelect = anim.getElementsByClassName('param')[0],
+      valueInput = anim.getElementsByClassName('val')[0],
+      deleteRowButton = anim.getElementsByClassName('delete-row')[0],
+      animCloseButton = anim.getElementsByClassName('close')[0],
+      animPlayButton = document.getElementById('play-animation'),
+      animStopButton = document.getElementById('stop-animation'),
+      animTimeoutHandle,
+      animPlayFlag = true,
+      frameIndicator = document.getElementById('frame-indicator'),
+      loop = document.getElementById('loop-anim'),
+      toggles = document.getElementsByClassName('toggle'),
+      currentColour = {
+        hsv: {
+          h: 0,
+          s: 0,
+          v: 1
+        },
+        on: true
+      };
 
 
   /*
@@ -1471,12 +1472,11 @@ function initialiseAnimationsPane() {
    */
   function paramChange(e) {
     var row = e.target.parentElement.parentElement,
-      valTd = row.getElementsByClassName('val-td')[0],
-      valInputs = valTd.getElementsByTagName('input'),
-      i;
+        valTd = row.getElementsByClassName('val-td')[0],
+        valInputs = valTd.getElementsByTagName('input');
 
     // Hide all inputs in valTd
-    for (i = 0; i < valInputs.length; i += 1) {
+    for (var i = 0; i < valInputs.length; i += 1) {
       hideElement(valInputs[i]);
     }
 
@@ -1529,11 +1529,11 @@ function initialiseAnimationsPane() {
     // and define an offset for where the indicator is to
     // be positioned
     var animRect = anim.getBoundingClientRect(),
-      rowRect  =  row.getBoundingClientRect(),
-      rowX = rowRect.left - animRect.left,
-      rowY = rowRect.top  - animRect.top,
-      offsetX = -14,
-      offsetY = 1;
+        rowRect  =  row.getBoundingClientRect(),
+        rowX = rowRect.left - animRect.left,
+        rowY = rowRect.top  - animRect.top,
+        offsetX = -14,
+        offsetY = 1;
 
     // Set the absolute position of the indicator
     frameIndicator.style.left = (rowX + offsetX) + 'px';
@@ -1712,9 +1712,9 @@ function initialiseAnimationsPane() {
   function addFrame() {
     // Duplicate the penultimate row in the table
     var index = animTable.rows.length - 2,
-      oldRow = animTable.rows[index],
-      newRow = oldRow.cloneNode(true),
-      lastRow = animTable.rows[index + 1];
+        oldRow = animTable.rows[index],
+        newRow = oldRow.cloneNode(true),
+        lastRow = animTable.rows[index + 1];
 
     // Add event listeners
     newRow.getElementsByClassName('delete-row')[0]
@@ -1762,7 +1762,7 @@ function initialiseAnimationsPane() {
   /*** Add event listeners ***/
 
   // Add click event listeners to all toggle buttons
-  for (i = 0; i < toggles.length; i += 1) {
+  for (var i = 0; i < toggles.length; i += 1) {
     toggles[i].addEventListener('click', toggleChecked, false);
   }
 
@@ -1784,13 +1784,13 @@ function initialiseAnimationsPane() {
 function initialiseSettingsPanel() {
   'use strict';
   var hueIp = document.getElementById('hue-ip'),
-    hueUsername = document.getElementById('hue-username'),
-    hueLightNo = document.getElementById('hue-light-no'),
-    hueTest = document.getElementById('hue-test'),
-    hueSave = document.getElementById('hue-save'),
-    hueClear = document.getElementById('hue-clear'),
-    hueMessages = document.getElementById('hue-messages'),
-    messageTimeoutHandle;
+      hueUsername = document.getElementById('hue-username'),
+      hueLightNo = document.getElementById('hue-light-no'),
+      hueTest = document.getElementById('hue-test'),
+      hueSave = document.getElementById('hue-save'),
+      hueClear = document.getElementById('hue-clear'),
+      hueMessages = document.getElementById('hue-messages'),
+      messageTimeoutHandle;
 
   /*
    * Display a message in a span in the settings page
@@ -1974,13 +1974,13 @@ function initialiseSettingsPanel() {
 function initialiseConnectingSplashscreen() {
   'use strict';
   var connectingSplashscreen = document.getElementById('connecting'),
-    connectingMessage = document.getElementById('connecting-message'),
-    connectingSkip = document.getElementById('connecting-skip'),
-    connectingSpinner = document.getElementById('connecting-spinner'),
-    connectingError = document.getElementById('connecting-error'),
-    connectingErrorMessage = document.getElementById('connecting-error-message'),
-    connectingTimedOut = document.getElementById('connecting-timed-out'),
-    connectingRetryButton = document.getElementById('connecting-retry');
+      connectingMessage = document.getElementById('connecting-message'),
+      connectingSkip = document.getElementById('connecting-skip'),
+      connectingSpinner = document.getElementById('connecting-spinner'),
+      connectingError = document.getElementById('connecting-error'),
+      connectingErrorMessage = document.getElementById('connecting-error-message'),
+      connectingTimedOut = document.getElementById('connecting-timed-out'),
+      connectingRetryButton = document.getElementById('connecting-retry');
 
   /*
    * Prematurely close the connecting pane.
@@ -2061,19 +2061,18 @@ function LocalDataStorage() {
   'use strict';
 
   // Find which type of storage to use for the environment
-  try {
-    // Webpage environment
-    this.storageType = 'local';
-    window.localStorage.available = true;
-  } catch (localErr) {
-    // window.localStorage failed
-    // Try chrome.storage.local for Chrome Apps instead
-    this.storageType = 'chrome';
+  this.storageType = chrome && chrome.runtime && chrome.runtime.id ?
+    'chrome' : 'local';
+
+  if (this.storageType === 'local') {
+    // Check that local storage is available
     try {
-      chrome.storage.local.set({
-        available: true
-      });
-    } catch (chromeErr) {
+      this.storageType = 'local';
+      window.localStorage.setItem('available', true);
+      // Bug - Safari incognito allows access to localStorage
+      // but the storage available is 0 Bytes
+    } catch (localErr) {
+      // window.localStorage failed
       this.storageType = 'unavailable';
       console.error('Storage unavailable');
     }
