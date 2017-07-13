@@ -12,6 +12,7 @@
 </head>
 
 <body>
+
   <div id="connecting">
     <div id="connecting-spinner">
       <span id="connecting-message">Connecting to Hue Bridge...</span>
@@ -39,6 +40,7 @@
     <br>
     <a id="connecting-skip" class="button">continue anyway</a>
   </div>
+
   <div id="top-left-buttons-panel">
     <i id="settings-button" class="material-icons toggle" title="Settings">settings</i>
     <div id="settings" class="fade-in container">
@@ -52,7 +54,7 @@
             </tr>
             <tr>
               <td><label>Username</label></td>
-              <td><input id="hue-username" type="text"></td>
+              <td><input id="hue-username" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></td>
             </tr>
             <tr>
               <td>Light/Room</td>
@@ -74,6 +76,7 @@
         <div id="about">Version 0.3, James Forsyth, 2017</div>
       </div>
     </div>
+
     <i id="reset-button" class="material-icons button" title="Reset to default colour">settings_backup_restore</i>
     <i id="help-button" class="material-icons button">help_outline</i>
     <div id="help" class="fade-in container">
@@ -97,6 +100,7 @@
       </div>
     </div>
   </div>
+
   <div class="fade-in container">
     <div class="carousel">
       <!--i id="carousel-gamut" class="material-icons button" title="Colour gamut">signal_cellular_null</i-->
@@ -121,6 +125,7 @@
     <!--br>
     <input id="colour" type="color" class="hidden" value="#FFFFFF"-->
   </div>
+
   <div id="anim" class="hidden container fade-in">
     <i class="material-icons close button">close</i>
     <h3>Create a custom animation sequence</h3>
@@ -169,6 +174,7 @@
       </tbody>
     </table>
   </div>
+
 </body>
 
 </html>

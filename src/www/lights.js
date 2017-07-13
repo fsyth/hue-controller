@@ -1317,7 +1317,11 @@ function initialiseColourWheel() {
   // Attach a function to the reset button
   if (resetButton) {
     resetButton.addEventListener('click', function () {
-      setColour(0xC9FE6E);
+      setColour(0xFDDD72, {
+        h: 8418 / 0x10000,
+        s:  140 / 0x100,
+        v:  254 / 0x100
+      });
       draw();
     });
   }
